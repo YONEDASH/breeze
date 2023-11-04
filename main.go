@@ -1,8 +1,16 @@
 package main
 
-// #include "hello.h"
-import "C"
+import (
+	"breeze/scanner"
+	"fmt"
+)
 
 func main() {
-	C.hello()
+	tokens, hadError := scanner.Scan("(( ) identifier Another1 .4 if 10 1.5 \"hello\"")
+
+	for _, tk := range tokens {
+		fmt.Println(tk)
+	}
+
+	fmt.Println(hadError)
 }
