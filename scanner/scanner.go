@@ -3,6 +3,7 @@ package scanner
 import (
 	"breeze/common"
 	"breeze/out"
+	"fmt"
 	"os"
 )
 
@@ -11,6 +12,7 @@ type sourceScanner struct {
 	length int
 	start  common.Position
 	cursor common.Position
+	file   *common.SourceFile
 }
 
 func (s *sourceScanner) isDone() bool {
@@ -55,7 +57,20 @@ func (s *sourceScanner) match(r rune) bool {
 	return false
 }
 
-func initScanner(source string) sourceScanner {
+func initScanner(file *common.SourceFile) (sourceScanner, string) {
+	err := file.Validate()
+	if err != nil {
+		out.PrintErrorMessage(fmt.Sprintf("Could not validate path %s: %s", file.Path, err.Error()))
+		os.Exit(out.ExOsFile)
+	}
+
+	source, err := file.GetContent()
+
+	if err != nil {
+		out.PrintErrorMessage(fmt.Sprintf("Could not read %s", file.Path))
+		os.Exit(out.ExOsFile)
+	}
+
 	runes := []rune(source)
 	runesLen := len(runes)
 	return sourceScanner{
@@ -63,7 +78,8 @@ func initScanner(source string) sourceScanner {
 		length: runesLen,
 		start:  common.InitPosition(),
 		cursor: common.InitPosition(),
-	}
+		file:   file,
+	}, source
 }
 
 func makeToken(scanner *sourceScanner, id TokenId) Token {
@@ -135,8 +151,8 @@ func identifier(scanner *sourceScanner) Token {
 	// Keywords
 	lexeme := string(scanner.source[scanner.start.Index:scanner.cursor.Index])
 	switch lexeme {
-	case "if":
-		return makeToken(scanner, If)
+	case "let":
+		return makeToken(scanner, Let)
 	}
 
 	return makeToken(scanner, Identifier)
@@ -229,8 +245,8 @@ func scanToken(scanner *sourceScanner) Token {
 	return errorToken(scanner, "Unexpected token")
 }
 
-func Scan(source string) ([]Token, bool) {
-	scanner := initScanner(source)
+func Scan(file *common.SourceFile) ([]Token, bool) {
+	scanner, source := initScanner(file)
 	var tokens []Token
 	var hadError = false
 
@@ -243,17 +259,13 @@ func Scan(source string) ([]Token, bool) {
 		if token.Id == Invalid {
 			hadError = true
 
-			/*
-				marked := out.MarkLexeme(source, token.Position.Index, 1, token.Position.Column)
-				_, err := fmt.Fprintf(os.Stderr, "Error in line %d, col %d: %s\n%s\n", token.Position.Line, token.Position.Column, token.Lexeme, marked)
+			if scanner.peekPrevious() != '💨' {
+				out.PrintErrorMessage(token.Lexeme)
+			} else {
+				out.PrintErrorMessage("This breeze is unfortunately an unexpected token")
+			}
 
-				if err != nil {
-					return nil, true
-				}
-			*/
-
-			out.PrintErrorMessage(token.Lexeme)
-			out.PrintErrorSource("test.bz", token.Position)
+			out.PrintErrorSource(file.Path, token.Position)
 			out.PrintMarkedLine(os.Stderr, source, 1, token.Position, out.ColorRed, '^')
 
 			continue

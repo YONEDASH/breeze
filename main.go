@@ -1,6 +1,7 @@
 package main
 
 import (
+	"breeze/common"
 	"breeze/out"
 	"breeze/scanner"
 	"fmt"
@@ -8,7 +9,8 @@ import (
 )
 
 func main() {
-	tokens, hadError := scanner.Scan("#(( ) identifier Another1 .4 if 10 1.5 ä \"hello\"\nhello ö")
+	file := common.InitSource("test/breeze.bz")
+	tokens, hadError := scanner.Scan(&file)
 
 	if hadError {
 		out.PrintErrorMessage("Scanning phase failed")
