@@ -129,6 +129,13 @@ func identifier(scanner *sourceScanner) Token {
 		scanner.advance()
 	}
 
+	// Keywords
+	lexeme := string(scanner.source[scanner.start.Index:scanner.cursor.Index])
+	switch lexeme {
+	case "if":
+		return makeToken(scanner, If)
+	}
+
 	return makeToken(scanner, Identifier)
 }
 

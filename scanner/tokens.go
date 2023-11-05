@@ -9,6 +9,8 @@ const (
 	OpenParen
 	CloseParen
 
+	If
+
 	// Operators
 	Dot
 
