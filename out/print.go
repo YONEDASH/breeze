@@ -8,7 +8,7 @@ import (
 )
 
 func PrintErrorMessage(message string) {
-	_, err := fmt.Fprintf(os.Stderr, "%s%s%sERROR%s   %s%s%s%s\n", BgRed, Black, Bold, Reset, Red, Bold, message, Reset)
+	_, err := fmt.Fprintf(os.Stderr, "%s%s%sERROR%s   %s%s%s%s\n", ColorBgRed, ColorBlack, ColorBold, ColorReset, ColorRed, ColorBold, message, ColorReset)
 	if err != nil {
 		os.Exit(ExIoErr)
 		return
@@ -17,7 +17,7 @@ func PrintErrorMessage(message string) {
 
 func PrintErrorSource(path string, position common.Position) {
 	// →
-	_, err := fmt.Fprintf(os.Stderr, "%s      → %s:%d:%d%s\n", White, path, position.Line, position.Column, Reset)
+	_, err := fmt.Fprintf(os.Stderr, "%s      → %s:%d:%d%s\n", ColorWhite, path, position.Line, position.Column, ColorReset)
 	if err != nil {
 		os.Exit(ExIoErr)
 		return
@@ -39,11 +39,11 @@ func PrintLine(writer io.Writer, source string, position common.Position) {
 
 func PrintMarkedLine(writer io.Writer, source string, length int, position common.Position, color Color, icon rune) {
 	lineString := getSourceLine(source, position.Index)
-	markedLine := markLexeme(lineString, length, position.Column, color, Bold)
+	markedLine := markLexeme(lineString, length, position.Column, color, ColorBold)
 	printLineString(writer, position.Line, markedLine)
 
 	marker := getMarker(length, position.Column, icon)
-	_, err := fmt.Fprintf(writer, "      | %s%s%s\n", color, marker, Reset)
+	_, err := fmt.Fprintf(writer, "      | %s%s%s\n", color, marker, ColorReset)
 	if err != nil {
 		os.Exit(ExIoErr)
 		return

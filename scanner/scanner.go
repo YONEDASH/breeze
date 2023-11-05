@@ -254,7 +254,7 @@ func Scan(source string) ([]Token, bool) {
 
 			out.PrintErrorMessage(token.Lexeme)
 			out.PrintErrorSource("test.bz", token.Position)
-			out.PrintMarkedLine(os.Stderr, source, 1, token.Position, out.Red, '^')
+			out.PrintMarkedLine(os.Stderr, source, 1, token.Position, out.ColorRed, '^')
 
 			continue
 		}

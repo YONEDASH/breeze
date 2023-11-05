@@ -45,7 +45,7 @@ func markLexeme(line string, length int, column int, colors ...Color) string {
 		colorString += string(c)
 	}
 
-	return string(before) + colorString + string(lexeme) + string(Reset) + string(after)
+	return string(before) + colorString + string(lexeme) + string(ColorReset) + string(after)
 }
 
 func getLineBounds(source string, index int) (int, int) {
