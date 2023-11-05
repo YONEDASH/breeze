@@ -1,15 +1,16 @@
 package scanner
 
 import (
-	"fmt"
+	"breeze/common"
+	"breeze/out"
 	"os"
 )
 
 type sourceScanner struct {
 	source []rune
 	length int
-	start  Position
-	cursor Position
+	start  common.Position
+	cursor common.Position
 }
 
 func (s *sourceScanner) isDone() bool {
@@ -33,7 +34,7 @@ func (s *sourceScanner) peekPrevious() rune {
 }
 
 func (s *sourceScanner) peek() rune {
-	if s.cursor.Index >= s.length {
+	if s.isDone() {
 		return 0
 	}
 	return s.source[s.cursor.Index]
@@ -55,11 +56,13 @@ func (s *sourceScanner) match(r rune) bool {
 }
 
 func initScanner(source string) sourceScanner {
+	runes := []rune(source)
+	runesLen := len(runes)
 	return sourceScanner{
-		source: []rune(source),
-		length: len(source),
-		start:  initPosition(),
-		cursor: initPosition(),
+		source: runes,
+		length: runesLen,
+		start:  common.InitPosition(),
+		cursor: common.InitPosition(),
 	}
 }
 
@@ -190,7 +193,7 @@ func text(scanner *sourceScanner) Token {
 	// ignore closing "
 	scanner.cursor.Index--
 
-	token := makeToken(scanner, Identifier)
+	token := makeToken(scanner, String)
 
 	// revert our ignoring magic
 	scanner.cursor.Index++
@@ -240,10 +243,18 @@ func Scan(source string) ([]Token, bool) {
 		if token.Id == Invalid {
 			hadError = true
 
-			_, err := fmt.Fprintf(os.Stderr, "Error in line %d, col %d: %s\n", token.Position.Line, token.Position.Column, token.Lexeme)
-			if err != nil {
-				return nil, true
-			}
+			/*
+				marked := out.MarkLexeme(source, token.Position.Index, 1, token.Position.Column)
+				_, err := fmt.Fprintf(os.Stderr, "Error in line %d, col %d: %s\n%s\n", token.Position.Line, token.Position.Column, token.Lexeme, marked)
+
+				if err != nil {
+					return nil, true
+				}
+			*/
+
+			out.PrintErrorMessage(token.Lexeme)
+			out.PrintErrorSource("test.bz", token.Position)
+			out.PrintMarkedLine(os.Stderr, source, 1, token.Position, out.Red, '^')
 
 			continue
 		}

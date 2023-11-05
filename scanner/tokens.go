@@ -1,38 +1,30 @@
 package scanner
 
+import "breeze/common"
+
 type TokenId int8
 
+//goland:noinspection GoCommentStart
 const (
 	Invalid = iota
 	Eof
 
-	OpenParen
-	CloseParen
-
+	// Keywords
 	If
 
-	// Operators
-	Dot
-
+	// Literals
 	Identifier
-
 	Integer
 	Float
 	String
+
+	// Others
+	OpenParen
+	CloseParen
 )
-
-type Position struct {
-	Index  int
-	Line   int
-	Column int
-}
-
-func initPosition() Position {
-	return Position{Line: 1, Column: 1, Index: 0}
-}
 
 type Token struct {
 	Id       TokenId
 	Lexeme   string
-	Position Position
+	Position common.Position
 }
