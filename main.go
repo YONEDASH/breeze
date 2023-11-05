@@ -19,7 +19,7 @@ func main() {
 	}
 
 	for _, tk := range tokens {
-		fmt.Println(tk)
+		fmt.Println(tk.Stringify())
 	}
 
 }

@@ -1,6 +1,9 @@
 package scanner
 
-import "breeze/common"
+import (
+	"breeze/common"
+	"fmt"
+)
 
 type TokenId int8
 
@@ -27,4 +30,8 @@ type Token struct {
 	Id       TokenId
 	Lexeme   string
 	Position common.Position
+}
+
+func (t *Token) Stringify() string {
+	return fmt.Sprintf("#%2d: %s", t.Id, t.Lexeme)
 }
