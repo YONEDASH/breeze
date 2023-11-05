@@ -10,7 +10,7 @@ const (
 	Eof
 
 	// Keywords
-	If
+	Let
 
 	// Literals
 	Identifier
