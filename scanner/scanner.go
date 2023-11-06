@@ -236,6 +236,16 @@ func scanToken(scanner *sourceScanner) Token {
 	switch current {
 	case '"':
 		return text(scanner)
+	case '=':
+		return makeToken(scanner, Equals)
+	case '+':
+		return makeToken(scanner, Plus)
+	case '-':
+		return makeToken(scanner, Minus)
+	case '*':
+		return makeToken(scanner, Star)
+	case '/':
+		return makeToken(scanner, Slash)
 	case '(':
 		return makeToken(scanner, OpenParen)
 	case ')':

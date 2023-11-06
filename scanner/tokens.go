@@ -5,12 +5,19 @@ import (
 	"fmt"
 )
 
-type TokenId int8
+type TokenId uint8
 
 //goland:noinspection GoCommentStart
 const (
 	Invalid = iota
 	Eof
+
+	// Operators
+	Plus
+	Minus
+	Star
+	Slash
+	Equals
 
 	// Keywords
 	Let
