@@ -32,6 +32,13 @@ const (
 	ColorBlink         Color = "\033[5m"
 )
 
+func (c Color) S() string {
+	if ansiEnabled {
+		return string(c)
+	}
+	return ""
+}
+
 func SetColorsEnabled(state bool) {
 	ansiEnabled = state
 }

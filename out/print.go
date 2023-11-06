@@ -8,7 +8,7 @@ import (
 )
 
 func PrintErrorMessage(message string) {
-	_, err := fmt.Fprintf(os.Stderr, "%s%s%sERROR%s   %s%s%s%s\n", ColorBgRed, ColorBlack, ColorBold, ColorReset, ColorRed, ColorBold, message, ColorReset)
+	_, err := fmt.Fprintf(os.Stderr, "%s%s%sERROR%s   %s%s%s%s\n", ColorBgRed.S(), ColorBlack.S(), ColorBold.S(), ColorReset.S(), ColorRed.S(), ColorBold.S(), message, ColorReset.S())
 	if err != nil {
 		os.Exit(ExIoErr)
 		return
@@ -17,7 +17,7 @@ func PrintErrorMessage(message string) {
 
 func PrintErrorSource(path string, position common.Position) {
 	// →
-	_, err := fmt.Fprintf(os.Stderr, "%s      → %s:%d:%d%s\n", ColorWhite, path, position.Line, position.Column, ColorReset)
+	_, err := fmt.Fprintf(os.Stderr, "%s      → %s:%d:%d%s\n", ColorWhite.S(), path, position.Line, position.Column, ColorReset.S())
 	if err != nil {
 		os.Exit(ExIoErr)
 		return
@@ -43,7 +43,7 @@ func PrintMarkedLine(writer io.Writer, source string, length int, position commo
 	printLineString(writer, position.Line, markedLine)
 
 	marker := getMarker(length, position.Column, icon)
-	_, err := fmt.Fprintf(writer, "      | %s%s%s\n", color, marker, ColorReset)
+	_, err := fmt.Fprintf(writer, "      | %s%s%s\n", color, marker, ColorReset.S())
 	if err != nil {
 		os.Exit(ExIoErr)
 		return
