@@ -8,7 +8,15 @@ import (
 )
 
 func PrintErrorMessage(message string) {
-	_, err := fmt.Fprintf(os.Stderr, "%s%s%sERROR%s   %s%s%s%s\n", ColorBgRed.S(), ColorBlack.S(), ColorBold.S(), ColorReset.S(), ColorRed.S(), ColorBold.S(), message, ColorReset.S())
+	_, err := fmt.Fprintf(os.Stderr, "%s%sERROR%s   %s%s%s\n", ColorRed.S(), ColorBold.S(), ColorReset.S(), ColorRed.S(), message, ColorReset.S())
+	if err != nil {
+		os.Exit(ExIoErr)
+		return
+	}
+}
+
+func PrintHintMessage(hint string, color Color) {
+	_, err := fmt.Fprintf(os.Stderr, "      | %s%s%s\n", color.S(), hint, ColorReset.S())
 	if err != nil {
 		os.Exit(ExIoErr)
 		return
