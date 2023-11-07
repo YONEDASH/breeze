@@ -2,6 +2,7 @@ package out
 
 // Based on https://man.openbsd.org/sysexits
 
+//goland:noinspection ALL
 const (
 	ExOk          = 0
 	ExUsage       = 64

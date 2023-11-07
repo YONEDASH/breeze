@@ -6,6 +6,7 @@ var (
 	ansiEnabled = true
 )
 
+//goland:noinspection ALL
 const (
 	ColorBlack         Color = "\033[30m" // Foreground colors
 	ColorRed           Color = "\033[31m"
