@@ -68,7 +68,7 @@ func getLineBounds(source string, index int) (int, int) {
 	}
 
 	for {
-		if lineEnd <= 0 || lineEnd >= sourceLen {
+		if lineEnd < 0 || lineEnd >= sourceLen {
 			break
 		}
 
