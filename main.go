@@ -41,14 +41,14 @@ func main() {
 
 	nodes, hadError := parser.ParseTokens(file, source, tokens)
 
+	for _, node := range nodes {
+		fmt.Println(node.Stringify())
+	}
+
 	if hadError {
 		out.PrintErrorMessage("Parsing phase failed")
 		os.Exit(out.ExDataErr)
 		return
-	}
-
-	for _, node := range nodes {
-		fmt.Println(node.Stringify())
 	}
 
 	fmt.Println("Result:", debugInterpret(nodes[0]))

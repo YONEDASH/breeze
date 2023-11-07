@@ -17,7 +17,7 @@ type tokenParser struct {
 var emptyToken = scanner.Token{Id: scanner.EOF, Lexeme: "empty token", Position: common.InitPosition()}
 
 func (p *tokenParser) isDone() bool {
-	return p.peek().Id == scanner.EOF || p.cursor >= p.length
+	return p.cursor >= p.length || p.peek().Id == scanner.EOF
 }
 
 func (p *tokenParser) advance() scanner.Token {
@@ -55,6 +55,21 @@ func initParser(tokens []scanner.Token) tokenParser {
 	}
 }
 
+func synchronize(parser *tokenParser, id scanner.TokenId) {
+	parser.cursor--
+
+	// Throw away any token until the one to synchronize to is found
+	for {
+		if parser.isDone() {
+			break
+		}
+
+		if parser.advance().Id == id {
+			break
+		}
+	}
+}
+
 func ParseTokens(file common.SourceFile, source string, tokens []scanner.Token) ([]ast.Node, bool) {
 	parser := initParser(tokens)
 	hadError := false
@@ -69,14 +84,22 @@ func ParseTokens(file common.SourceFile, source string, tokens []scanner.Token) 
 
 		if node.GetType() == ast.Err {
 			hadError = true
-			err := node.(*ast.ErrNode)
+			errNode := node.(*ast.ErrNode)
 			token := node.GetToken()
 			pos := node.GetToken().Position
 
-			out.PrintErrorMessage(err.Message)
+			out.PrintErrorMessage(errNode.Message)
 			out.PrintErrorSource(file.Path, pos)
-			out.PrintMarkedLine(os.Stderr, source, len(token.Lexeme), pos, out.ColorRed, '^')
+			out.PrintMarkedLine(os.Stderr, source, token.LexemeLength(), pos, out.ColorRed, '^')
+
+			hintLen := len(errNode.Hint)
+			if hintLen > 0 {
+				out.PrintHintMessage(errNode.Hint, out.ColorRed)
+			}
+
 			// Synchronize to ;
+			synchronize(&parser, scanner.Semicolon)
+
 			continue
 		}
 
@@ -87,15 +110,46 @@ func ParseTokens(file common.SourceFile, source string, tokens []scanner.Token) 
 }
 
 func declaration(parser *tokenParser) ast.Node {
-	return err(emptyToken, "Unexpected token")
+	current := parser.advance()
+
+	return err(current, "Unexpected token", "Expecting let, fn")
 }
 
 func statement(parser *tokenParser) ast.Node {
-	return err(emptyToken, "Unexpected token")
+	return err(emptyToken, "Unexpected token", "")
 }
 
 func expression(parser *tokenParser) ast.Node {
-	return add(parser)
+	return assign(parser)
+}
+
+func assign(parser *tokenParser) ast.Node {
+	left := add(parser)
+
+	var current scanner.Token
+
+	for {
+		if parser.isDone() {
+			break
+		}
+
+		current = parser.peek()
+
+		if current.Id != scanner.Equals && current.Id != scanner.PlusEquals && current.Id != scanner.MinusEquals && current.Id != scanner.StarEquals && current.Id != scanner.SlashEquals {
+			break
+		}
+		// consume =
+		operator := parser.advance()
+
+		right := expression(parser)
+		left = &ast.BinaryExpr{
+			Operator: operator,
+			Left:     left,
+			Right:    right,
+		}
+	}
+
+	return left
 }
 
 func add(parser *tokenParser) ast.Node {
@@ -152,16 +206,29 @@ func primary(parser *tokenParser) ast.Node {
 	current := parser.advance()
 
 	switch current.Id {
+	case scanner.OpenParen:
+		node := expression(parser)
+
+		if parser.advance().Id != scanner.CloseParen {
+			return err(current, "Unclosed grouping expression", "Add missing ) to close group")
+		}
+
+		return node
+
+	case scanner.Identifier:
+		return &ast.IdentifierExpr{Token: current, Name: current.Lexeme}
+
 	case scanner.Integer:
 		return &ast.IntegerExpr{Token: current, Value: current.Lexeme}
 	}
 
-	return err(current, "Expected expression")
+	return err(current, "Expected expression", "")
 }
 
-func err(token scanner.Token, message string) ast.Node {
+func err(token scanner.Token, message string, hint string) ast.Node {
 	return &ast.ErrNode{
 		Token:   token,
 		Message: message,
+		Hint:    hint,
 	}
 }
