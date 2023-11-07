@@ -157,7 +157,7 @@ type Node interface {
 
 # AST Nodes
 nodes = {
-    Err("Err", {Entry("Message", "string")}),
+    Err("Err", {Entry("Message", "string"),Entry("Hint","string")}),
     Expr("Binary", {Entry("Operator", "scanner.Token"), Entry("Left", "Node"), Entry("Right", "Node")}),
     Expr("Identifier", {Entry("Name", "string")}),
     Expr("Integer", {Entry("Value", "string")}),
