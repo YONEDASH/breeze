@@ -3,7 +3,6 @@ package scanner
 import (
 	"breeze/common"
 	"breeze/out"
-	"fmt"
 	"os"
 )
 
@@ -57,20 +56,7 @@ func (s *sourceScanner) match(r rune) bool {
 	return false
 }
 
-func initScanner(file *common.SourceFile) (sourceScanner, string) {
-	err := file.Validate()
-	if err != nil {
-		out.PrintErrorMessage(fmt.Sprintf("Could not validate path %s: %s", file.Path, err.Error()))
-		os.Exit(out.ExOsFile)
-	}
-
-	source, err := file.GetContent()
-
-	if err != nil {
-		out.PrintErrorMessage(fmt.Sprintf("Could not read %s", file.Path))
-		os.Exit(out.ExOsFile)
-	}
-
+func initScanner(file *common.SourceFile, source string) sourceScanner {
 	runes := []rune(source)
 	runesLen := len(runes)
 	return sourceScanner{
@@ -79,7 +65,7 @@ func initScanner(file *common.SourceFile) (sourceScanner, string) {
 		start:  common.InitPosition(),
 		cursor: common.InitPosition(),
 		file:   file,
-	}, source
+	}
 }
 
 func makeToken(scanner *sourceScanner, id TokenId) Token {
@@ -255,8 +241,8 @@ func scanToken(scanner *sourceScanner) Token {
 	return errorToken(scanner, "Unexpected token")
 }
 
-func Scan(file *common.SourceFile) ([]Token, bool) {
-	scanner, source := initScanner(file)
+func Scan(file *common.SourceFile, source string) ([]Token, bool) {
+	scanner := initScanner(file, source)
 	var tokens []Token
 	var hadError = false
 
@@ -283,7 +269,7 @@ func Scan(file *common.SourceFile) ([]Token, bool) {
 		tokens = append(tokens, token)
 	}
 
-	tokens = append(tokens, makeToken(&scanner, Eof))
+	tokens = append(tokens, makeToken(&scanner, EOF))
 
 	return tokens, hadError
 }

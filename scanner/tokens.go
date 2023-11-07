@@ -10,7 +10,7 @@ type TokenId uint8
 //goland:noinspection GoCommentStart
 const (
 	Invalid = iota
-	Eof
+	EOF
 
 	// Operators
 	Plus

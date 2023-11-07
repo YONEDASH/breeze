@@ -5,11 +5,11 @@ import "breeze/scanner"
 type NodeId uint8
 
 const (
-	BinaryId NodeId = iota
-	IdentifierId
-	IntegerId
-	FloatingId
+	IntegerId NodeId = iota
 	ErrId
+	FloatingId
+	BinaryId
+	IdentifierId
 )
 
 type NodeType uint8
@@ -26,49 +26,6 @@ type Node interface {
 	GetType() NodeType
 	Stringify() string
 	GetToken() scanner.Token
-}
-
-type BinaryExpr struct {
-	Node
-	Operator scanner.Token
-}
-
-func (node *BinaryExpr) GetType() NodeType {
-	return Expr
-}
-
-func (node *BinaryExpr) GetId() NodeId {
-	return BinaryId
-}
-
-func (node *BinaryExpr) Stringify() string {
-	return "(BinaryExpr Operator=" + node.Operator.Stringify() + ")"
-}
-
-func (node *BinaryExpr) GetToken() scanner.Token {
-	return node.Operator
-}
-
-type IdentifierExpr struct {
-	Node
-	Token scanner.Token
-	Name  string
-}
-
-func (node *IdentifierExpr) GetType() NodeType {
-	return Expr
-}
-
-func (node *IdentifierExpr) GetId() NodeId {
-	return IdentifierId
-}
-
-func (node *IdentifierExpr) Stringify() string {
-	return "(IdentifierExpr Name=" + string(node.Name) + ")"
-}
-
-func (node *IdentifierExpr) GetToken() scanner.Token {
-	return node.Token
 }
 
 type IntegerExpr struct {
@@ -90,6 +47,28 @@ func (node *IntegerExpr) Stringify() string {
 }
 
 func (node *IntegerExpr) GetToken() scanner.Token {
+	return node.Token
+}
+
+type ErrNode struct {
+	Node
+	Token   scanner.Token
+	Message string
+}
+
+func (node *ErrNode) GetType() NodeType {
+	return Err
+}
+
+func (node *ErrNode) GetId() NodeId {
+	return ErrId
+}
+
+func (node *ErrNode) Stringify() string {
+	return "(ErrNode Message=" + string(node.Message) + ")"
+}
+
+func (node *ErrNode) GetToken() scanner.Token {
 	return node.Token
 }
 
@@ -115,24 +94,47 @@ func (node *FloatingExpr) GetToken() scanner.Token {
 	return node.Token
 }
 
-type ErrNode struct {
+type BinaryExpr struct {
 	Node
-	Token   scanner.Token
-	Message string
+	Right    Node
+	Operator scanner.Token
+	Left     Node
 }
 
-func (node *ErrNode) GetType() NodeType {
-	return Err
+func (node *BinaryExpr) GetType() NodeType {
+	return Expr
 }
 
-func (node *ErrNode) GetId() NodeId {
-	return ErrId
+func (node *BinaryExpr) GetId() NodeId {
+	return BinaryId
 }
 
-func (node *ErrNode) Stringify() string {
-	return "(ErrNode Message=" + string(node.Message) + ")"
+func (node *BinaryExpr) Stringify() string {
+	return "(BinaryExpr Right=" + node.Right.Stringify() + " Operator=" + node.Operator.Stringify() + " Left=" + node.Left.Stringify() + ")"
 }
 
-func (node *ErrNode) GetToken() scanner.Token {
+func (node *BinaryExpr) GetToken() scanner.Token {
+	return node.Operator
+}
+
+type IdentifierExpr struct {
+	Node
+	Token scanner.Token
+	Name  string
+}
+
+func (node *IdentifierExpr) GetType() NodeType {
+	return Expr
+}
+
+func (node *IdentifierExpr) GetId() NodeId {
+	return IdentifierId
+}
+
+func (node *IdentifierExpr) Stringify() string {
+	return "(IdentifierExpr Name=" + string(node.Name) + ")"
+}
+
+func (node *IdentifierExpr) GetToken() scanner.Token {
 	return node.Token
 }

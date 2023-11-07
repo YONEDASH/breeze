@@ -91,7 +91,7 @@ def gen_functions(node):
     stringify = "func (node *" + node.node_name() + ") Stringify() string {\n\treturn \"(" + node.node_name()
     for entry in node.entries:
         stringify += " " + entry.entry_name() + "=\"+"
-        if entry.entry_type() == "scanner.Token" or entry.entry_type() == "Expr" or entry.entry_type() == "Stmt":
+        if entry.entry_type() == "scanner.Token" or entry.entry_type() == "Node":
             stringify += "node." + entry.entry_name() + ".Stringify()"
         else:
             stringify += "string(node." + entry.entry_name() + ")"
@@ -158,7 +158,7 @@ type Node interface {
 # AST Nodes
 nodes = {
     Err("Err", {Entry("Message", "string")}),
-    Expr("Binary", {Entry("Operator", "scanner.Token")}),
+    Expr("Binary", {Entry("Operator", "scanner.Token"), Entry("Left", "Node"), Entry("Right", "Node")}),
     Expr("Identifier", {Entry("Name", "string")}),
     Expr("Integer", {Entry("Value", "string")}),
     Expr("Floating", {Entry("Value", "string")}),
