@@ -225,13 +225,31 @@ func scanToken(scanner *sourceScanner) Token {
 	case '=':
 		return makeToken(scanner, Equals)
 	case '+':
+		if scanner.peek() == '=' {
+			scanner.advance()
+			return makeToken(scanner, PlusEquals)
+		}
 		return makeToken(scanner, Plus)
 	case '-':
+		if scanner.peek() == '=' {
+			scanner.advance()
+			return makeToken(scanner, MinusEquals)
+		}
 		return makeToken(scanner, Minus)
 	case '*':
+		if scanner.peek() == '=' {
+			scanner.advance()
+			return makeToken(scanner, StarEquals)
+		}
 		return makeToken(scanner, Star)
 	case '/':
+		if scanner.peek() == '=' {
+			scanner.advance()
+			return makeToken(scanner, SlashEquals)
+		}
 		return makeToken(scanner, Slash)
+	case ';':
+		return makeToken(scanner, Semicolon)
 	case '(':
 		return makeToken(scanner, OpenParen)
 	case ')':

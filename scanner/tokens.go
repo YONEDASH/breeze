@@ -19,6 +19,12 @@ const (
 	Slash
 	Equals
 
+	// 2-char operators
+	PlusEquals
+	MinusEquals
+	StarEquals
+	SlashEquals
+
 	// Keywords
 	Let
 
@@ -31,6 +37,7 @@ const (
 	// Others
 	OpenParen
 	CloseParen
+	Semicolon
 )
 
 type Token struct {
@@ -41,4 +48,9 @@ type Token struct {
 
 func (t *Token) Stringify() string {
 	return fmt.Sprintf("#%2d: %s", t.Id, t.Lexeme)
+}
+
+func (t *Token) LexemeLength() int {
+	runes := []rune(t.Lexeme)
+	return len(runes)
 }
