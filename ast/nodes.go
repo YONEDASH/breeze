@@ -6,15 +6,17 @@ type NodeId uint8
 
 const (
 	BinaryId NodeId = iota
+	IdentifierId
 	IntegerId
 	FloatingId
-	IdentifierId
+	ErrId
 )
 
 type NodeType uint8
 
 const (
-	Expr NodeType = iota
+	Err NodeType = iota
+	Expr
 	Stmt
 	Decl
 )
@@ -47,53 +49,9 @@ func (node *BinaryExpr) GetToken() scanner.Token {
 	return node.Operator
 }
 
-type IntegerExpr struct {
-	Node
-	token scanner.Token
-	Value string
-}
-
-func (node *IntegerExpr) GetType() NodeType {
-	return Expr
-}
-
-func (node *IntegerExpr) GetId() NodeId {
-	return IntegerId
-}
-
-func (node *IntegerExpr) Stringify() string {
-	return "(IntegerExpr Value=" + string(node.Value) + ")"
-}
-
-func (node *IntegerExpr) GetToken() scanner.Token {
-	return node.token
-}
-
-type FloatingExpr struct {
-	Node
-	token scanner.Token
-	Value string
-}
-
-func (node *FloatingExpr) GetType() NodeType {
-	return Expr
-}
-
-func (node *FloatingExpr) GetId() NodeId {
-	return FloatingId
-}
-
-func (node *FloatingExpr) Stringify() string {
-	return "(FloatingExpr Value=" + string(node.Value) + ")"
-}
-
-func (node *FloatingExpr) GetToken() scanner.Token {
-	return node.token
-}
-
 type IdentifierExpr struct {
 	Node
-	token scanner.Token
+	Token scanner.Token
 	Name  string
 }
 
@@ -110,5 +68,71 @@ func (node *IdentifierExpr) Stringify() string {
 }
 
 func (node *IdentifierExpr) GetToken() scanner.Token {
-	return node.token
+	return node.Token
+}
+
+type IntegerExpr struct {
+	Node
+	Token scanner.Token
+	Value string
+}
+
+func (node *IntegerExpr) GetType() NodeType {
+	return Expr
+}
+
+func (node *IntegerExpr) GetId() NodeId {
+	return IntegerId
+}
+
+func (node *IntegerExpr) Stringify() string {
+	return "(IntegerExpr Value=" + string(node.Value) + ")"
+}
+
+func (node *IntegerExpr) GetToken() scanner.Token {
+	return node.Token
+}
+
+type FloatingExpr struct {
+	Node
+	Token scanner.Token
+	Value string
+}
+
+func (node *FloatingExpr) GetType() NodeType {
+	return Expr
+}
+
+func (node *FloatingExpr) GetId() NodeId {
+	return FloatingId
+}
+
+func (node *FloatingExpr) Stringify() string {
+	return "(FloatingExpr Value=" + string(node.Value) + ")"
+}
+
+func (node *FloatingExpr) GetToken() scanner.Token {
+	return node.Token
+}
+
+type ErrNode struct {
+	Node
+	Token   scanner.Token
+	Message string
+}
+
+func (node *ErrNode) GetType() NodeType {
+	return Err
+}
+
+func (node *ErrNode) GetId() NodeId {
+	return ErrId
+}
+
+func (node *ErrNode) Stringify() string {
+	return "(ErrNode Message=" + string(node.Message) + ")"
+}
+
+func (node *ErrNode) GetToken() scanner.Token {
+	return node.Token
 }

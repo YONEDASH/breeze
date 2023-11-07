@@ -27,18 +27,27 @@ class Node:
     def is_stmt(self):
         return isinstance(self, Stmt)
 
+    def is_decl(self):
+        return isinstance(self, Decl)
+
     def node_name(self):
         if self.is_expr():
             return self.name + "Expr"
         elif self.is_stmt():
             return self.name + "Stmt"
-        return self.name + "Decl"
+        elif self.is_decl():
+            return self.name + "Decl"
+        return self.name + "Node"
 
     def node_id(self):
         return self.name + "Id"
 
     def token(self):
         return self.token_entry
+
+
+class Err(Node):
+    pass
 
 
 class Expr(Node):
@@ -57,7 +66,7 @@ def gen_struct(node):
     struct = "type " + node.node_name() + " struct {\n\tNode\n"
 
     if node.token() == 0:
-        struct += "\ttoken scanner.Token\n"
+        struct += "\tToken scanner.Token\n"
 
     for entry in node.entries:
         struct += "\t" + entry.entry_name() + " " + entry.entry_type() + "\n"
@@ -67,11 +76,13 @@ def gen_struct(node):
 
 
 def gen_functions(node):
-    node_type = "Decl"
+    node_type = "Err"
     if node.is_expr():
         node_type = "Expr"
     elif node.is_stmt():
         node_type = "Stmt"
+    elif node.is_decl():
+        node_type = "Decl"
 
     get_type = "func (node *" + node.node_name() + ") GetType() NodeType {\n\treturn " + node_type + "\n}\n"
 
@@ -90,7 +101,7 @@ def gen_functions(node):
     get_token = "func (node *" + node.node_name() + ") GetToken() scanner.Token {\n\treturn "
     entry_token = node.token()
     if entry_token == 0:
-        get_token += "node.token"
+        get_token += "node.Token"
     else:
         name = entry_token.entry_name()
         get_token += "node." + name
@@ -120,7 +131,8 @@ const (
 type NodeType uint8
 
 const (
-\tExpr NodeType = iota
+\tErr NodeType = iota
+\tExpr
 \tStmt
 \tDecl
 )
@@ -145,6 +157,7 @@ type Node interface {
 
 # AST Nodes
 nodes = {
+    Err("Err", {Entry("Message", "string")}),
     Expr("Binary", {Entry("Operator", "scanner.Token")}),
     Expr("Identifier", {Entry("Name", "string")}),
     Expr("Integer", {Entry("Value", "string")}),
