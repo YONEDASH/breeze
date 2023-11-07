@@ -26,13 +26,22 @@ type Node interface {
 	GetType() NodeType
 	Stringify() string
 	GetToken() scanner.Token
+	Visit(visitor Visitor) any
+}
+
+type Visitor interface {
+	VisitBinaryExpr(node *BinaryExpr) any
+	VisitIdentifierExpr(node *IdentifierExpr) any
+	VisitIntegerExpr(node *IntegerExpr) any
+	VisitErrNode(node *ErrNode) any
+	VisitFloatingExpr(node *FloatingExpr) any
 }
 
 type BinaryExpr struct {
 	Node
 	Left     Node
-	Right    Node
 	Operator scanner.Token
+	Right    Node
 }
 
 func (node *BinaryExpr) GetType() NodeType {
@@ -44,11 +53,15 @@ func (node *BinaryExpr) GetId() NodeId {
 }
 
 func (node *BinaryExpr) Stringify() string {
-	return "(BinaryExpr Left=" + node.Left.Stringify() + " Right=" + node.Right.Stringify() + " Operator=" + node.Operator.Stringify() + ")"
+	return "(BinaryExpr Left=" + node.Left.Stringify() + " Operator=" + node.Operator.Stringify() + " Right=" + node.Right.Stringify() + ")"
 }
 
 func (node *BinaryExpr) GetToken() scanner.Token {
 	return node.Operator
+}
+
+func (node *BinaryExpr) Visit(visitor Visitor) any {
+	return visitor.VisitBinaryExpr(node)
 }
 
 type IdentifierExpr struct {
@@ -73,6 +86,10 @@ func (node *IdentifierExpr) GetToken() scanner.Token {
 	return node.Token
 }
 
+func (node *IdentifierExpr) Visit(visitor Visitor) any {
+	return visitor.VisitIdentifierExpr(node)
+}
+
 type IntegerExpr struct {
 	Node
 	Token scanner.Token
@@ -93,6 +110,10 @@ func (node *IntegerExpr) Stringify() string {
 
 func (node *IntegerExpr) GetToken() scanner.Token {
 	return node.Token
+}
+
+func (node *IntegerExpr) Visit(visitor Visitor) any {
+	return visitor.VisitIntegerExpr(node)
 }
 
 type ErrNode struct {
@@ -118,6 +139,10 @@ func (node *ErrNode) GetToken() scanner.Token {
 	return node.Token
 }
 
+func (node *ErrNode) Visit(visitor Visitor) any {
+	return visitor.VisitErrNode(node)
+}
+
 type FloatingExpr struct {
 	Node
 	Token scanner.Token
@@ -138,4 +163,8 @@ func (node *FloatingExpr) Stringify() string {
 
 func (node *FloatingExpr) GetToken() scanner.Token {
 	return node.Token
+}
+
+func (node *FloatingExpr) Visit(visitor Visitor) any {
+	return visitor.VisitFloatingExpr(node)
 }

@@ -107,7 +107,9 @@ def gen_functions(node):
         get_token += "node." + name
     get_token += "\n}\n"
 
-    return get_type + "\n" + get_id + "\n" + stringify + "\n" + get_token
+    visit = ("func (node *" + node.node_name() + ") Visit(visitor Visitor) any {\n\treturn visitor.Visit" + node.node_name() + "(node)\n}\n")
+
+    return get_type + "\n" + get_id + "\n" + stringify + "\n" + get_token + "\n" + visit
 
 
 def gen_source(ast_nodes):
@@ -142,9 +144,17 @@ type Node interface {
 \tGetType() NodeType
 \tStringify() string
 \tGetToken() scanner.Token
+\tVisit(visitor Visitor) any
 }
 
 """
+
+    source_code += "type Visitor interface {\n"
+
+    for node in ast_nodes:
+        source_code += "\tVisit" + node.node_name() + "(node *" + node.node_name() + ") any\n"
+
+    source_code += "}\n\n"
 
     for i, node in enumerate(ast_nodes):
         source_code += gen_struct(node) + "\n"
