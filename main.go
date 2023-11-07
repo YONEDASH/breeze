@@ -1,14 +1,13 @@
 package main
 
 import (
-	"breeze/ast"
 	"breeze/common"
 	"breeze/out"
 	"breeze/parser"
 	"breeze/scanner"
+	"breeze/slow"
 	"fmt"
 	"os"
-	"strconv"
 )
 
 func main() {
@@ -41,49 +40,16 @@ func main() {
 
 	nodes, hadError := parser.ParseTokens(file, source, tokens)
 
-	for _, node := range nodes {
-		fmt.Println(node.Stringify())
-	}
-
 	if hadError {
 		out.PrintErrorMessage("Parsing phase failed")
 		os.Exit(out.ExDataErr)
 		return
 	}
 
-	fmt.Println("Result:", debugInterpret(nodes[0]))
-
-}
-
-func debugInterpret(node ast.Node) int {
-	if node.GetId() == ast.IntegerId {
-		i, _ := strconv.Atoi(node.(*ast.IntegerExpr).Value)
-		fmt.Println("ret int", i)
-		return i
-	} else if node.GetId() == ast.BinaryId {
-		binary := node.(*ast.BinaryExpr)
-
-		fmt.Println("binary l,r op " + binary.Operator.Lexeme)
-		left := debugInterpret(binary.Left)
-		fmt.Println("l =", left)
-		right := debugInterpret(binary.Right)
-		fmt.Println("r =", right)
-
-		switch binary.Operator.Id {
-		case scanner.Plus:
-			return left + right
-		case scanner.Minus:
-			return left - right
-		case scanner.Star:
-			return left * right
-		case scanner.Slash:
-			return left / right
-		}
-
-		fmt.Println("unknown op")
-		return 0
+	runtime := &slow.Runtime{}
+	for _, node := range nodes {
+		fmt.Println(node.Stringify())
+		fmt.Println("=", node.Visit(runtime))
 	}
 
-	fmt.Println("unknown expr")
-	return 0
 }
