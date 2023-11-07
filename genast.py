@@ -17,7 +17,7 @@ class Node:
 
         self.token_entry = 0
         for entry in entries:
-            if entry.entry_name() == "scanner.Token":
+            if entry.entry_type() == "scanner.Token":
                 self.token_entry = entry
                 break
 
@@ -71,13 +71,50 @@ def gen_functions(node):
     stringify += ")\"\n}\n"
 
     get_token = "func (node *" + node.node_name() + ") GetToken() scanner.Token {\n\treturn "
-    if node.token() == 0:
+    entry_token = node.token()
+    if entry_token == 0:
         get_token += "node.token"
     else:
-        get_token += "node." + node.token().node_name()
+        name = entry_token.entry_name()
+        get_token += "node." + name
     get_token += "\n}\n"
 
     return get_id + "\n" + stringify + "\n" + get_token
+
+
+def gen_source(ast_nodes):
+    source_code = """package ast
+
+import "breeze/scanner"
+
+type NodeId uint8
+
+const (
+"""
+
+    for i, node in enumerate(ast_nodes):
+        source_code += "\t" + node.node_id()
+        if i == 0:
+            source_code += " NodeId = iota"
+        source_code += "\n"
+
+    source_code += """)
+
+type Node interface {
+\tGetId() NodeId
+\tStringify() string
+\tGetToken() scanner.Token
+}
+
+"""
+
+    for i, node in enumerate(ast_nodes):
+        source_code += gen_struct(node) + "\n"
+        source_code += gen_functions(node)
+        if i != ast_nodes.__len__() - 1:
+            source_code += "\n"
+
+    return source_code
 
 
 # AST Nodes
@@ -88,36 +125,9 @@ nodes = {
     Expr("Floating", {Entry("Value", "string")}),
 }
 
-source = """package ast
+source = gen_source(nodes)
 
-import "breeze/scanner"
-
-type NodeId uint8
-
-const (
-"""
-
-for i, node in enumerate(nodes):
-    source += "\t" + node.node_id()
-    if i == 0:
-        source += " NodeId = iota"
-    source += "\n"
-
-source += """)
-
-type Node interface {
-\tGetId() NodeId
-\tStringify() string
-\tGetToken() scanner.Token
-}
-
-"""
-
-for i, node in enumerate(nodes):
-    source += gen_struct(node) + "\n"
-    source += gen_functions(node)
-    if i != nodes.__len__() - 1:
-        source += "\n"
+print(source)
 
 file = open("ast/nodes.go", "w")
 file.write(source)

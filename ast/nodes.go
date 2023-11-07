@@ -5,9 +5,9 @@ import "breeze/scanner"
 type NodeId uint8
 
 const (
-	IntegerId NodeId = iota
+	BinaryId NodeId = iota
 	FloatingId
-	BinaryId
+	IntegerId
 	IdentifierId
 )
 
@@ -17,22 +17,21 @@ type Node interface {
 	GetToken() scanner.Token
 }
 
-type IntegerExpr struct {
+type BinaryExpr struct {
 	Node
-	token scanner.Token
-	Value string
+	Operator scanner.Token
 }
 
-func (node *IntegerExpr) GetId() NodeId {
-	return IntegerId
+func (node *BinaryExpr) GetId() NodeId {
+	return BinaryId
 }
 
-func (node *IntegerExpr) Stringify() string {
-	return "(IntegerExpr Value=" + string(node.Value) + ")"
+func (node *BinaryExpr) Stringify() string {
+	return "(BinaryExpr Operator=" + node.Operator.Stringify() + ")"
 }
 
-func (node *IntegerExpr) GetToken() scanner.Token {
-	return node.token
+func (node *BinaryExpr) GetToken() scanner.Token {
+	return node.Operator
 }
 
 type FloatingExpr struct {
@@ -53,21 +52,21 @@ func (node *FloatingExpr) GetToken() scanner.Token {
 	return node.token
 }
 
-type BinaryExpr struct {
+type IntegerExpr struct {
 	Node
-	token    scanner.Token
-	Operator scanner.Token
+	token scanner.Token
+	Value string
 }
 
-func (node *BinaryExpr) GetId() NodeId {
-	return BinaryId
+func (node *IntegerExpr) GetId() NodeId {
+	return IntegerId
 }
 
-func (node *BinaryExpr) Stringify() string {
-	return "(BinaryExpr Operator=" + node.Operator.Stringify() + ")"
+func (node *IntegerExpr) Stringify() string {
+	return "(IntegerExpr Value=" + string(node.Value) + ")"
 }
 
-func (node *BinaryExpr) GetToken() scanner.Token {
+func (node *IntegerExpr) GetToken() scanner.Token {
 	return node.token
 }
 
