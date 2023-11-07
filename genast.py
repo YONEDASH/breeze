@@ -24,10 +24,15 @@ class Node:
     def is_expr(self):
         return isinstance(self, Expr)
 
+    def is_stmt(self):
+        return isinstance(self, Stmt)
+
     def node_name(self):
         if self.is_expr():
             return self.name + "Expr"
-        return self.name + "Stmt"
+        elif self.is_stmt():
+            return self.name + "Stmt"
+        return self.name + "Decl"
 
     def node_id(self):
         return self.name + "Id"
@@ -41,6 +46,10 @@ class Expr(Node):
 
 
 class Stmt(Node):
+    pass
+
+
+class Decl(Node):
     pass
 
 
@@ -58,6 +67,14 @@ def gen_struct(node):
 
 
 def gen_functions(node):
+    node_type = "Decl"
+    if node.is_expr():
+        node_type = "Expr"
+    elif node.is_stmt():
+        node_type = "Stmt"
+
+    get_type = "func (node *" + node.node_name() + ") GetType() NodeType {\n\treturn " + node_type + "\n}\n"
+
     get_id = "func (node *" + node.node_name() + ") GetId() NodeId {\n\treturn " + node.node_id() + "\n}\n"
 
     stringify = "func (node *" + node.node_name() + ") Stringify() string {\n\treturn \"(" + node.node_name()
@@ -79,7 +96,7 @@ def gen_functions(node):
         get_token += "node." + name
     get_token += "\n}\n"
 
-    return get_id + "\n" + stringify + "\n" + get_token
+    return get_type + "\n" + get_id + "\n" + stringify + "\n" + get_token
 
 
 def gen_source(ast_nodes):
@@ -100,8 +117,17 @@ const (
 
     source_code += """)
 
+type NodeType uint8
+
+const (
+\tExpr NodeType = iota
+\tStmt
+\tDecl
+)
+
 type Node interface {
 \tGetId() NodeId
+\tGetType() NodeType
 \tStringify() string
 \tGetToken() scanner.Token
 }
