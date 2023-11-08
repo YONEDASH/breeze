@@ -15,6 +15,7 @@ type tokenParser struct {
 }
 
 var emptyToken = scanner.Token{Id: scanner.EOF, Lexeme: "empty token", Position: common.InitPosition()}
+var desugaredToken = scanner.Token{Id: scanner.EOF, Lexeme: "desugared token", Position: common.InitPosition()}
 
 func (p *tokenParser) isDone() bool {
 	return p.cursor >= p.length || p.peek().Id == scanner.EOF
@@ -80,7 +81,7 @@ func ParseTokens(file common.SourceFile, source string, tokens []scanner.Token) 
 			break
 		}
 
-		node := expression(&parser)
+		node := statement(&parser)
 
 		if node.GetType() == ast.Err {
 			hadError = true
@@ -116,7 +117,69 @@ func declaration(parser *tokenParser) ast.Node {
 }
 
 func statement(parser *tokenParser) ast.Node {
-	return err(emptyToken, "Unexpected token", "")
+	var result ast.Node
+
+	switch parser.peek().Id {
+	case scanner.Let:
+		result = let(parser)
+		break
+	}
+
+	if result == nil {
+		// Parse expression statement
+		expr := expression(parser)
+		result = &ast.ExprStmt{Token: expr.GetToken(), Expression: expr}
+	}
+
+	// Check for ;
+	if parser.advance().Id != scanner.Semicolon {
+		return err(parser.peekPrevious(), "Unfinished statement", "Add ; to end of statement")
+	}
+
+	return result
+}
+
+func let(parser *tokenParser) ast.Node {
+	keyword := parser.advance()
+
+	identifierToken := parser.advance()
+	if identifierToken.Id != scanner.Identifier {
+		return err(identifierToken, "Expected identifier in let name declaration", "")
+	}
+	varName := identifierToken.Lexeme
+
+	var varType = ""
+	if parser.peek().Id == scanner.Colon {
+		// Consume :
+		parser.advance()
+
+		if parser.peek().Id != scanner.Identifier {
+			return err(identifierToken, "Expected identifier in let type declaration", "")
+		}
+
+		lexeme := parser.advance().Lexeme
+		varType = lexeme
+	}
+
+	letDecl := &ast.LetDecl{Token: keyword, Identifier: varName, Type: varType}
+
+	// Check for assign
+	if parser.peek().Id != scanner.Equals {
+		return letDecl
+	}
+
+	// Assign desugaring
+
+	// Consume =
+	operator := parser.advance()
+
+	// Expression for value
+	expr := expression(parser)
+	identifierExpr := &ast.IdentifierExpr{Token: identifierToken, Name: varName}
+	assignExpr := &ast.BinaryExpr{Operator: operator, Left: identifierExpr, Right: expr}
+
+	blockStmt := &ast.BlockStmt{Token: keyword, Nodes: []ast.Node{letDecl, assignExpr}}
+	return blockStmt
 }
 
 func expression(parser *tokenParser) ast.Node {
@@ -138,6 +201,7 @@ func assign(parser *tokenParser) ast.Node {
 		if current.Id != scanner.Equals && current.Id != scanner.PlusEquals && current.Id != scanner.MinusEquals && current.Id != scanner.StarEquals && current.Id != scanner.SlashEquals {
 			break
 		}
+
 		// consume =
 		operator := parser.advance()
 
