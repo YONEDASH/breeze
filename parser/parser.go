@@ -15,7 +15,6 @@ type tokenParser struct {
 }
 
 var emptyToken = scanner.Token{Id: scanner.EOF, Lexeme: "empty token", Position: common.InitPosition()}
-var desugaredToken = scanner.Token{Id: scanner.EOF, Lexeme: "desugared token", Position: common.InitPosition()}
 
 func (p *tokenParser) isDone() bool {
 	return p.cursor >= p.length || p.peek().Id == scanner.EOF
