@@ -250,6 +250,8 @@ func scanToken(scanner *sourceScanner) Token {
 		return makeToken(scanner, Slash)
 	case ';':
 		return makeToken(scanner, Semicolon)
+	case ':':
+		return makeToken(scanner, Colon)
 	case '(':
 		return makeToken(scanner, OpenParen)
 	case ')':

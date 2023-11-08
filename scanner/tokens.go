@@ -38,6 +38,7 @@ const (
 	OpenParen
 	CloseParen
 	Semicolon
+	Colon
 )
 
 type Token struct {
