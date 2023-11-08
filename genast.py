@@ -88,13 +88,32 @@ def gen_functions(node):
 
     get_id = "func (node *" + node.node_name() + ") GetId() NodeId {\n\treturn " + node.node_id() + "\n}\n"
 
-    stringify = "func (node *" + node.node_name() + ") Stringify() string {\n\treturn \"(" + node.node_name()
+    str_prefix = ""
+    for entry in node.entries:
+        if entry.entry_type()[0] == "[":
+            var_name = "str" + entry.entry_name()
+            str_prefix += "\t" + var_name + " := \"{\""
+            str_prefix += """
+\tfor i, n := range node.""" + entry.entry_name() + """ {
+\t\tstrNodes += n.Stringify()
+\t\tif i <= len(node.""" + entry.entry_name() + """)-1 {
+\t\t\tstrNodes += ", "
+\t\t}
+\t}"""
+            str_prefix += "\n\t" + var_name + " += \"}\"\n"
+
+    stringify = "func (node *" + node.node_name() + ") Stringify() string {\n" + str_prefix + "\treturn \"(" + node.node_name()
     for entry in node.entries:
         stringify += " " + entry.entry_name() + "=\"+"
         if entry.entry_type() == "scanner.Token" or entry.entry_type() == "Node":
             stringify += "node." + entry.entry_name() + ".Stringify()"
+        elif entry.entry_type()[0] == "[":
+            stringify += "str" + entry.entry_name()
         else:
-            stringify += "string(node." + entry.entry_name() + ")"
+            stringify += "string("
+            if entry.entry_type()[0] == "*":
+                stringify += "*"
+            stringify += "node." + entry.entry_name() + ")"
         stringify += "+\""
     stringify += ")\"\n}\n"
 
@@ -167,7 +186,10 @@ type Node interface {
 
 # AST Nodes
 nodes = {
-    Err("Err", {Entry("Message", "string"),Entry("Hint","string")}),
+    Err("Err", {Entry("Message", "string"), Entry("Hint", "string")}),
+    Stmt("Block", {Entry("Nodes", "[]Node")}),
+    Stmt("Expr", {Entry("Expression", "Node")}),
+    Decl("Let", {Entry("Identifier", "string"), Entry("Type", "string")}),
     Expr("Binary", {Entry("Operator", "scanner.Token"), Entry("Left", "Node"), Entry("Right", "Node")}),
     Expr("Identifier", {Entry("Name", "string")}),
     Expr("Integer", {Entry("Value", "string")}),
