@@ -193,9 +193,10 @@ nodes = {
     Decl("Let", {Entry("Identifier", "string"), Entry("Type", "string")}),
     Expr("Assign", {Entry("Operator", "scanner.Token"), Entry("Name", "scanner.Token"), Entry("Value", "Node")}),
     Expr("Binary", {Entry("Operator", "scanner.Token"), Entry("Left", "Node"), Entry("Right", "Node")}),
-    Expr("Identifier", {Entry("Name", "string")}),
-    Expr("Integer", {Entry("Value", "string")}),
-    Expr("Floating", {Entry("Value", "string")}),
+    Expr("Unary", {Entry("Operator", "scanner.Token"), Entry("Expression", "Node")}),
+    Expr("IdentifierLit", {Entry("Name", "string")}),
+    Expr("IntegerLit", {Entry("Value", "string")}),
+    Expr("FloatingLit", {Entry("Value", "string")}),
 }
 
 source = gen_source(nodes)
