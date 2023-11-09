@@ -99,21 +99,32 @@ func (c *Context) comparativeError(cause ast.Node, causeMessage string, where as
 	c.nodeHelpHint(where, whereMessage)
 }
 
-func (c *Context) declare(declName string, declStaticType string, declType DeclarationType, node ast.Node) {
-	prev, ok := c.top().Declared[declName]
+func (c *Context) lookup(declName string) (declaration, bool) {
+	size := len(c.Stack) - 1
+	for i := size; i >= 0; i-- {
+		decl, ok := c.Stack[i].Declared[declName]
+		if ok {
+			return decl, true
+		}
+	}
+	return declaration{}, false
+}
 
+func (c *Context) declare(declName string, declStaticType string, declType DeclarationType, node ast.Node) {
+	// Shadowed variables will be allowed (for now?)
+	top := c.top()
+	prev, ok := top.Declared[declName]
 	if ok {
-		c.comparativeError(node, "Identifier already declared", prev.DeclaredAt, "Declared here")
+		c.comparativeError(node, "Already declared", prev.DeclaredAt, "Declared here")
 		return
 	}
 
 	decl := declaration{DeclaredAt: node, Initialized: false, StaticType: declStaticType, Type: declType}
-	c.top().Declared[declName] = decl
+	top.Declared[declName] = decl
 }
 
 func (c *Context) define(name string, at ast.Node, value ast.Node) {
-	scope := c.top()
-	decl, ok := scope.Declared[name]
+	decl, ok := c.lookup(name)
 
 	if !ok {
 		c.nodeError(at, "Cannot define undeclared identifier")
@@ -133,6 +144,7 @@ func (c *Context) define(name string, at ast.Node, value ast.Node) {
 		return
 	}
 
+	scope := c.top()
 	scope.Declared[name] = decl
 }
 
@@ -147,8 +159,7 @@ func (c *Context) end() {
 func (c *Context) VisitIdentifierLitExpr(node *ast.IdentifierLitExpr) any {
 	name := node.Name
 
-	scope := c.top()
-	decl, ok := scope.Declared[name]
+	decl, ok := c.lookup(name)
 
 	if !ok {
 		c.nodeError(node, "Undeclared identifier")
@@ -161,9 +172,6 @@ func (c *Context) VisitIdentifierLitExpr(node *ast.IdentifierLitExpr) any {
 	}
 
 	return decl.StaticType
-}
-func (c *Context) VisitIntegerLitExpr(node *ast.IntegerLitExpr) any {
-	return "int"
 }
 func (c *Context) VisitLetDecl(node *ast.LetDecl) any {
 	declName := node.Identifier
@@ -184,18 +192,37 @@ func (c *Context) VisitBinaryExpr(node *ast.BinaryExpr) any {
 
 	return combinedType
 }
+
+func (c *Context) VisitIntegerLitExpr(node *ast.IntegerLitExpr) any {
+	return "int"
+}
+
 func (c *Context) VisitFloatingLitExpr(node *ast.FloatingLitExpr) any {
 	return "float"
 }
+
 func (c *Context) VisitDebugStmt(node *ast.DebugStmt) any {
+	node.Expression.Visit(c)
 	return nil
 }
+
+func (c *Context) VisitClosureStmt(node *ast.ClosureStmt) any {
+	block := node.Block
+
+	c.begin()
+	_ = block.Visit(c)
+	c.end()
+
+	return nil
+}
+
 func (c *Context) VisitBlockStmt(node *ast.BlockStmt) any {
 	for _, n := range node.Nodes {
-		n.Visit(c)
+		_ = n.Visit(c)
 	}
 	return nil
 }
+
 func (c *Context) VisitUnaryExpr(node *ast.UnaryExpr) any {
 	if node.GetId() != ast.IntegerLitId && node.GetId() != ast.FloatingLitId {
 		out.PrintErrorMessage("Unary not possible")
@@ -203,12 +230,14 @@ func (c *Context) VisitUnaryExpr(node *ast.UnaryExpr) any {
 	}
 	return node.Expression.Visit(c)
 }
+
 func (c *Context) VisitAssignExpr(node *ast.AssignExpr) any {
 	defName := node.Name.Lexeme
 	defValue := node.Value
 	c.define(defName, node, defValue)
 	return defValue.Visit(c)
 }
+
 func (c *Context) VisitExprStmt(node *ast.ExprStmt) any {
 	node.Expression.Visit(c)
 	return nil

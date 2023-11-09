@@ -1,4 +1,6 @@
-let x = 10;
-let y = 20;
-let result = x + y;
-debug result;
+let x = 1;
+{
+    let x = 2;
+    debug x;
+}
+debug x;

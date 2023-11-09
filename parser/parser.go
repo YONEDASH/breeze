@@ -179,6 +179,8 @@ func statement(parser *tokenParser) ast.Node {
 	current := parser.peek()
 
 	switch current.Id {
+	case scanner.OpenBrace:
+		return closure(parser)
 	case scanner.Debug:
 		return debug(parser)
 	}
@@ -191,6 +193,30 @@ func statement(parser *tokenParser) ast.Node {
 
 	result := &ast.ExprStmt{Token: expr.GetToken(), Expression: expr}
 	return expectSemicolon(parser, result)
+}
+
+func closure(parser *tokenParser) ast.Node {
+	// Consume {
+	keyword := parser.advance()
+
+	nodes := make([]ast.Node, 0)
+
+	for {
+		if parser.isDone() {
+			break
+		}
+
+		if parser.peek().Id == scanner.CloseBrace {
+			parser.advance()
+			break
+		}
+
+		node := declaration(parser)
+		nodes = append(nodes, node)
+	}
+
+	block := &ast.BlockStmt{Token: keyword, Nodes: nodes}
+	return &ast.ClosureStmt{Token: keyword, Block: block}
 }
 
 func debug(parser *tokenParser) ast.Node {

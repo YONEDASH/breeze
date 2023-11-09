@@ -189,6 +189,7 @@ nodes = {
     Err("Err", {Entry("Message", "string"), Entry("Hint", "string")}),
     Stmt("Debug", {Entry("Expression", "Node")}),
     Stmt("Block", {Entry("Nodes", "[]Node")}),
+    Stmt("Closure", {Entry("Block", "Node")}),
     Stmt("Expr", {Entry("Expression", "Node")}),
     Decl("Let", {Entry("Identifier", "string"), Entry("Type", "string")}),
     Expr("Assign", {Entry("Operator", "scanner.Token"), Entry("Name", "scanner.Token"), Entry("Value", "Node")}),

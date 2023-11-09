@@ -12,14 +12,38 @@ import (
 
 type Runtime struct {
 	ast.Visitor
-	Declared  map[string]bool
+	Current *Environment
+}
+
+type Environment struct {
+	Parent    *Environment
 	Variables map[string]any
 }
 
-var GlobalRuntime = Runtime{Declared: make(map[string]bool), Variables: make(map[string]any)}
+func (e *Environment) get(name string) any {
+	val, ok := e.Variables[name]
+	if !ok {
+		if e.Parent != nil {
+			return e.Parent.get(name)
+		} else {
+			fmt.Println("Runtime Error:", name, "not found")
+			return nil
+		}
+	}
+	return val
+}
+
+func (e *Environment) set(name string, value any) {
+	e.Variables[name] = value
+}
+
+func initEnv(parent *Environment) *Environment {
+	return &Environment{Parent: parent, Variables: make(map[string]any)}
+}
+
+var GlobalRuntime = Runtime{Current: initEnv(nil)}
 
 func (r *Runtime) VisitLetDecl(node *ast.LetDecl) any {
-	r.Declared[node.Identifier] = true
 	return nil
 }
 
@@ -34,11 +58,22 @@ func (r *Runtime) VisitExprStmt(node *ast.ExprStmt) any {
 	return nil
 }
 
+func (r *Runtime) VisitClosureStmt(node *ast.ClosureStmt) any {
+	block := node.Block
+
+	before := r.Current
+	r.Current = initEnv(r.Current)
+	_ = block.Visit(r)
+	r.Current = before
+
+	return nil
+}
+
 func (r *Runtime) VisitBlockStmt(node *ast.BlockStmt) any {
 	nodes := node.Nodes
 
 	for _, n := range nodes {
-		n.Visit(r)
+		_ = n.Visit(r)
 	}
 
 	return nil
@@ -50,7 +85,7 @@ func (r *Runtime) VisitAssignExpr(node *ast.AssignExpr) any {
 	switch node.Operator.Id {
 	case scanner.Equals:
 		val := node.Value.Visit(r)
-		GlobalRuntime.Variables[name] = val
+		GlobalRuntime.Current.set(name, val)
 		return val
 	}
 
@@ -89,7 +124,7 @@ func (r *Runtime) VisitUnaryExpr(node *ast.UnaryExpr) any {
 }
 
 func (r *Runtime) VisitIdentifierLitExpr(node *ast.IdentifierLitExpr) any {
-	return r.Variables[node.Name]
+	return r.Current.get(node.Name)
 }
 
 func (r *Runtime) VisitIntegerLitExpr(node *ast.IntegerLitExpr) any {
