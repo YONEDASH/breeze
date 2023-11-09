@@ -26,6 +26,7 @@ const (
 	SlashEquals
 
 	// Keywords
+	Debug // prints node value
 	Let
 
 	// Literals

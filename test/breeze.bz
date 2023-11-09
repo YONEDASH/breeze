@@ -1,2 +1,8 @@
-(5 +5*10)
-(4+1)
+let x;
+x = 10;
+let y = 20;
+let result = 5 + x * y;
+debug x;
+debug y;
+debug result;
+debug (5+x)*y;

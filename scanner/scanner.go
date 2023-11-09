@@ -137,6 +137,8 @@ func identifier(scanner *sourceScanner) Token {
 	// Keywords
 	lexeme := string(scanner.source[scanner.start.Index:scanner.cursor.Index])
 	switch lexeme {
+	case "debug":
+		return makeToken(scanner, Debug)
 	case "let":
 		return makeToken(scanner, Let)
 	}

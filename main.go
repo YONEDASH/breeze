@@ -46,10 +46,10 @@ func main() {
 		return
 	}
 
-	runtime := &slow.Runtime{}
+	runtime := &slow.GlobalRuntime
 	for _, node := range nodes {
 		fmt.Println(node.Stringify())
-		fmt.Println("=", node.Visit(runtime))
+		node.Visit(runtime)
 	}
 
 }

@@ -187,9 +187,11 @@ type Node interface {
 # AST Nodes
 nodes = {
     Err("Err", {Entry("Message", "string"), Entry("Hint", "string")}),
+    Stmt("Debug", {Entry("Expression", "Node")}),
     Stmt("Block", {Entry("Nodes", "[]Node")}),
     Stmt("Expr", {Entry("Expression", "Node")}),
     Decl("Let", {Entry("Identifier", "string"), Entry("Type", "string")}),
+    Expr("Assign", {Entry("Operator", "scanner.Token"), Entry("Name", "scanner.Token"), Entry("Value", "Node")}),
     Expr("Binary", {Entry("Operator", "scanner.Token"), Entry("Left", "Node"), Entry("Right", "Node")}),
     Expr("Identifier", {Entry("Name", "string")}),
     Expr("Integer", {Entry("Value", "string")}),
