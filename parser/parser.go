@@ -141,7 +141,7 @@ func let(parser *tokenParser) ast.Node {
 	var varType = ""
 	if parser.peek().Id == scanner.Colon {
 		// Consume :
-		parser.advance()
+		_ = parser.advance()
 
 		if parser.peek().Id != scanner.Identifier {
 			return err(identifierToken, "Expected identifier in let type declaration", "")
@@ -165,6 +165,10 @@ func let(parser *tokenParser) ast.Node {
 
 	// Expression for value
 	expr := expression(parser)
+	if expr.GetId() == ast.ErrId {
+		return expr
+	}
+
 	assignExpr := &ast.AssignExpr{Operator: operator, Name: identifierToken, Value: expr}
 
 	blockStmt := &ast.BlockStmt{Token: keyword, Nodes: []ast.Node{letDecl, assignExpr}}
@@ -181,6 +185,10 @@ func statement(parser *tokenParser) ast.Node {
 
 	// Parse expression statement
 	expr := expression(parser)
+	if expr.GetId() == ast.ErrId {
+		return expr
+	}
+
 	result := &ast.ExprStmt{Token: expr.GetToken(), Expression: expr}
 	return expectSemicolon(parser, result)
 }
@@ -188,6 +196,9 @@ func statement(parser *tokenParser) ast.Node {
 func debug(parser *tokenParser) ast.Node {
 	keyword := parser.advance()
 	expr := expression(parser)
+	if expr.GetId() == ast.ErrId {
+		return expr
+	}
 	return expectSemicolon(parser, &ast.DebugStmt{Token: keyword, Expression: expr})
 }
 
@@ -197,6 +208,9 @@ func expression(parser *tokenParser) ast.Node {
 
 func assign(parser *tokenParser) ast.Node {
 	expr := add(parser)
+	if expr.GetId() == ast.ErrId {
+		return expr
+	}
 
 	var current = parser.peek()
 
@@ -208,9 +222,12 @@ func assign(parser *tokenParser) ast.Node {
 	operator := parser.advance()
 
 	right := assign(parser)
+	if right.GetId() == ast.ErrId {
+		return right
+	}
 
-	if expr.GetId() == ast.IdentifierId {
-		identifier := expr.(*ast.IdentifierExpr)
+	if expr.GetId() == ast.IdentifierLitId {
+		identifier := expr.(*ast.IdentifierLitExpr)
 		return &ast.AssignExpr{
 			Operator: operator,
 			Name:     identifier.GetToken(),
@@ -223,6 +240,9 @@ func assign(parser *tokenParser) ast.Node {
 
 func add(parser *tokenParser) ast.Node {
 	left := multiply(parser)
+	if left.GetId() == ast.ErrId {
+		return left
+	}
 
 	for {
 		if parser.isDone() {
@@ -236,9 +256,12 @@ func add(parser *tokenParser) ast.Node {
 		}
 
 		// consume operator
-		parser.advance()
+		_ = parser.advance()
 
 		right := multiply(parser)
+		if right.GetId() == ast.ErrId {
+			return right
+		}
 
 		left = &ast.BinaryExpr{Operator: operator, Left: left, Right: right}
 	}
@@ -247,7 +270,10 @@ func add(parser *tokenParser) ast.Node {
 }
 
 func multiply(parser *tokenParser) ast.Node {
-	left := primary(parser)
+	left := unary(parser)
+	if left.GetId() == ast.ErrId {
+		return left
+	}
 
 	for {
 		if parser.isDone() {
@@ -263,12 +289,35 @@ func multiply(parser *tokenParser) ast.Node {
 		// consume operator
 		parser.advance()
 
-		right := primary(parser)
+		right := unary(parser)
+		if right.GetId() == ast.ErrId {
+			return right
+		}
 
 		left = &ast.BinaryExpr{Operator: operator, Left: left, Right: right}
 	}
 
 	return left
+}
+
+func unary(parser *tokenParser) ast.Node {
+	current := parser.peek()
+
+	switch current.Id {
+	case scanner.Plus, scanner.Minus:
+		_ = parser.advance()
+
+		// No recursive parsing for unary. We don't want something like +-+-+-+----10
+		expr := primary(parser)
+
+		if expr.GetId() == ast.ErrId {
+			return expr
+		}
+
+		return &ast.UnaryExpr{Operator: current, Expression: expr}
+	}
+
+	return primary(parser)
 }
 
 func primary(parser *tokenParser) ast.Node {
@@ -285,13 +334,16 @@ func primary(parser *tokenParser) ast.Node {
 		return node
 
 	case scanner.Identifier:
-		return &ast.IdentifierExpr{Token: current, Name: current.Lexeme}
+		return &ast.IdentifierLitExpr{Token: current, Name: current.Lexeme}
 
 	case scanner.Integer:
-		return &ast.IntegerExpr{Token: current, Value: current.Lexeme}
+		return &ast.IntegerLitExpr{Token: current, Value: current.Lexeme}
+
+	case scanner.Float:
+		return &ast.FloatingLitExpr{Token: current, Value: current.Lexeme}
 	}
 
-	return err(current, "Expected expression", "")
+	return err(current, "Unexpected token", "")
 }
 
 func err(token scanner.Token, message string, hint string) ast.Node {

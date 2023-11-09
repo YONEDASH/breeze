@@ -1,8 +1,4 @@
-let x;
-x = 10;
+let x = 10;
 let y = 20;
-let result = 5 + x * y;
-debug x;
-debug y;
+let result = x + y;
 debug result;
-debug (5+x)*y;

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"breeze/analyzer"
 	"breeze/common"
 	"breeze/out"
 	"breeze/parser"
@@ -42,6 +43,14 @@ func main() {
 
 	if hadError {
 		out.PrintErrorMessage("Parsing phase failed")
+		os.Exit(out.ExDataErr)
+		return
+	}
+
+	hadError = analyzer.Analyze(file, source, nodes)
+
+	if hadError {
+		out.PrintErrorMessage("Static analyzing phase failed")
 		os.Exit(out.ExDataErr)
 		return
 	}

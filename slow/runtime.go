@@ -75,11 +75,24 @@ func (r *Runtime) VisitBinaryExpr(node *ast.BinaryExpr) any {
 	return nil
 }
 
-func (r *Runtime) VisitIdentifierExpr(node *ast.IdentifierExpr) any {
+func (r *Runtime) VisitUnaryExpr(node *ast.UnaryExpr) any {
+	value := node.Expression.Visit(r)
+
+	switch node.Operator.Id {
+	case scanner.Plus:
+		return +value.(int)
+	case scanner.Minus:
+		return -value.(int)
+	}
+
+	return nil
+}
+
+func (r *Runtime) VisitIdentifierLitExpr(node *ast.IdentifierLitExpr) any {
 	return r.Variables[node.Name]
 }
 
-func (r *Runtime) VisitIntegerExpr(node *ast.IntegerExpr) any {
+func (r *Runtime) VisitIntegerLitExpr(node *ast.IntegerLitExpr) any {
 	i, _ := strconv.Atoi(node.Value)
 	return i
 }
@@ -88,6 +101,6 @@ func (r *Runtime) VisitErrNode(node *ast.ErrNode) any {
 	return nil
 }
 
-func (r *Runtime) VisitFloatingExpr(node *ast.FloatingExpr) any {
+func (r *Runtime) VisitFloatingLitExpr(node *ast.FloatingLitExpr) any {
 	return nil
 }
