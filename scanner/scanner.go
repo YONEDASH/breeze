@@ -258,6 +258,14 @@ func scanToken(scanner *sourceScanner) Token {
 		return makeToken(scanner, OpenParen)
 	case ')':
 		return makeToken(scanner, CloseParen)
+	case '{':
+		return makeToken(scanner, OpenBrace)
+	case '}':
+		return makeToken(scanner, CloseBrace)
+	case '[':
+		return makeToken(scanner, OpenBracket)
+	case ']':
+		return makeToken(scanner, CloseBracket)
 	}
 
 	return errorToken(scanner, "Unexpected token")

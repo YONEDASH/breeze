@@ -38,6 +38,10 @@ const (
 	// Others
 	OpenParen
 	CloseParen
+	OpenBrace
+	CloseBrace
+	OpenBracket
+	CloseBracket
 	Semicolon
 	Colon
 )
