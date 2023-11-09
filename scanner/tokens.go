@@ -25,9 +25,18 @@ const (
 	StarEquals
 	SlashEquals
 
+	// Comparative
+	Lower
+	Greater
+	LowerEquals
+	GreaterEquals
+	EqualsEquals
+
 	// Keywords
 	Debug // prints node value
 	Let
+	If
+	Else
 
 	// Literals
 	Identifier

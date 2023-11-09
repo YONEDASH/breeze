@@ -57,7 +57,9 @@ func main() {
 
 	runtime := &slow.GlobalRuntime
 	for _, node := range nodes {
+		fmt.Print(out.ColorWhite.S())
 		fmt.Println(node.Stringify())
+		fmt.Print(out.ColorReset.S())
 		node.Visit(runtime)
 	}
 

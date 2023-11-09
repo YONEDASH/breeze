@@ -141,6 +141,10 @@ func identifier(scanner *sourceScanner) Token {
 		return makeToken(scanner, Debug)
 	case "let":
 		return makeToken(scanner, Let)
+	case "if":
+		return makeToken(scanner, If)
+	case "else":
+		return makeToken(scanner, Else)
 	}
 
 	return makeToken(scanner, Identifier)
@@ -225,6 +229,10 @@ func scanToken(scanner *sourceScanner) Token {
 	case '"':
 		return text(scanner)
 	case '=':
+		if scanner.peek() == '=' {
+			scanner.advance()
+			return makeToken(scanner, EqualsEquals)
+		}
 		return makeToken(scanner, Equals)
 	case '+':
 		if scanner.peek() == '=' {
@@ -250,6 +258,18 @@ func scanToken(scanner *sourceScanner) Token {
 			return makeToken(scanner, SlashEquals)
 		}
 		return makeToken(scanner, Slash)
+	case '<':
+		if scanner.peek() == '=' {
+			scanner.advance()
+			return makeToken(scanner, LowerEquals)
+		}
+		return makeToken(scanner, Lower)
+	case '>':
+		if scanner.peek() == '=' {
+			scanner.advance()
+			return makeToken(scanner, GreaterEquals)
+		}
+		return makeToken(scanner, Greater)
 	case ';':
 		return makeToken(scanner, Semicolon)
 	case ':':
