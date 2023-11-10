@@ -114,7 +114,6 @@ func expectSemicolon(parser *tokenParser, result ast.Node) ast.Node {
 	if parser.advance().Id != scanner.Semicolon {
 		return err(parser.peekPrevious(), "Unfinished statement", "Add ; to end of statement")
 	}
-
 	return result
 }
 
@@ -179,6 +178,8 @@ func statement(parser *tokenParser) ast.Node {
 	current := parser.peek()
 
 	switch current.Id {
+	case scanner.If:
+		return conditional(parser)
 	case scanner.OpenBrace:
 		return closure(parser)
 	case scanner.Debug:
@@ -193,6 +194,32 @@ func statement(parser *tokenParser) ast.Node {
 
 	result := &ast.ExprStmt{Token: expr.GetToken(), Expression: expr}
 	return expectSemicolon(parser, result)
+}
+
+func conditional(parser *tokenParser) ast.Node {
+	// Consume if
+	keyword := parser.advance()
+
+	condition := expression(parser)
+	if condition.GetId() == ast.ErrId {
+		return condition
+	}
+
+	statement := declaration(parser)
+	if statement.GetId() == ast.ErrId {
+		return statement
+	}
+
+	var elseStatement ast.Node
+	if parser.peek().Id == scanner.Else {
+		_ = parser.advance()
+		elseStatement = declaration(parser)
+		if elseStatement.GetId() == ast.ErrId {
+			return elseStatement
+		}
+	}
+
+	return &ast.ConditionalStmt{Token: keyword, Statement: statement, ElseStatement: elseStatement, Condition: condition}
 }
 
 func closure(parser *tokenParser) ast.Node {
@@ -233,7 +260,7 @@ func expression(parser *tokenParser) ast.Node {
 }
 
 func assign(parser *tokenParser) ast.Node {
-	expr := add(parser)
+	expr := equality(parser)
 	if expr.GetId() == ast.ErrId {
 		return expr
 	}
@@ -262,6 +289,50 @@ func assign(parser *tokenParser) ast.Node {
 	}
 
 	return err(operator, "Unsupported assign operation on token", "Expected identifier TODO: or call")
+}
+
+func equality(parser *tokenParser) ast.Node {
+	left := comparison(parser)
+
+	for {
+		if parser.isDone() {
+			break
+		}
+
+		current := parser.peek()
+		if current.Id != scanner.EqualsEquals && current.Id != scanner.BangEquals {
+			break
+		}
+
+		operator := parser.advance()
+		right := comparison(parser)
+
+		left = &ast.BinaryExpr{Operator: operator, Left: left, Right: right}
+	}
+
+	return left
+}
+
+func comparison(parser *tokenParser) ast.Node {
+	left := add(parser)
+
+	for {
+		if parser.isDone() {
+			break
+		}
+
+		current := parser.peek()
+		if current.Id != scanner.Lower && current.Id != scanner.Greater && current.Id != scanner.LowerEquals && current.Id != scanner.GreaterEquals {
+			break
+		}
+
+		operator := parser.advance()
+		right := add(parser)
+
+		left = &ast.BinaryExpr{Operator: operator, Left: left, Right: right}
+	}
+
+	return left
 }
 
 func add(parser *tokenParser) ast.Node {
@@ -330,10 +401,10 @@ func unary(parser *tokenParser) ast.Node {
 	current := parser.peek()
 
 	switch current.Id {
-	case scanner.Plus, scanner.Minus:
+	case scanner.Plus, scanner.Minus, scanner.Bang:
 		_ = parser.advance()
 
-		// No recursive parsing for unary. We don't want something like +-+-+-+----10
+		// No recursive parsing for unary. We don't want something like +-+--10 or !!!!!boolVal
 		expr := primary(parser)
 
 		if expr.GetId() == ast.ErrId {
@@ -367,6 +438,10 @@ func primary(parser *tokenParser) ast.Node {
 
 	case scanner.Float:
 		return &ast.FloatingLitExpr{Token: current, Value: current.Lexeme}
+
+	case scanner.True, scanner.False:
+		return &ast.BooleanLitExpr{Token: current, Value: current.Lexeme}
+
 	}
 
 	return err(current, "Unexpected token", "")

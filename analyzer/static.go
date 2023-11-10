@@ -4,6 +4,7 @@ import (
 	"breeze/ast"
 	"breeze/common"
 	"breeze/out"
+	"breeze/scanner"
 	"fmt"
 	"os"
 )
@@ -185,9 +186,14 @@ func (c *Context) VisitBinaryExpr(node *ast.BinaryExpr) any {
 	combinedType := leftType
 
 	if leftType != rightType {
-		c.nodeError(node, "Cannot combine types")
+		c.nodeError(node, "Type mismatch in binary expression")
 		out.PrintHintMessage(fmt.Sprintf("type %s != type %s", leftType, rightType), out.ColorRed)
 		return nil
+	}
+
+	switch node.Operator.Id {
+	case scanner.Lower, scanner.Greater, scanner.LowerEquals, scanner.GreaterEquals, scanner.EqualsEquals, scanner.BangEquals:
+		return "bool"
 	}
 
 	return combinedType
@@ -201,8 +207,23 @@ func (c *Context) VisitFloatingLitExpr(node *ast.FloatingLitExpr) any {
 	return "float"
 }
 
+func (c *Context) VisitBooleanLitExpr(node *ast.BooleanLitExpr) any {
+	return "bool"
+}
+
 func (c *Context) VisitDebugStmt(node *ast.DebugStmt) any {
-	node.Expression.Visit(c)
+	_ = node.Expression.Visit(c)
+	return nil
+}
+
+func (c *Context) VisitConditionalStmt(node *ast.ConditionalStmt) any {
+	conditionType := node.Condition.Visit(c)
+
+	if conditionType != "bool" {
+		c.comparativeError(node.Condition, "Unexpected condition type", node, "Expected bool type")
+		return nil
+	}
+
 	return nil
 }
 
@@ -224,11 +245,24 @@ func (c *Context) VisitBlockStmt(node *ast.BlockStmt) any {
 }
 
 func (c *Context) VisitUnaryExpr(node *ast.UnaryExpr) any {
-	if node.GetId() != ast.IntegerLitId && node.GetId() != ast.FloatingLitId {
-		out.PrintErrorMessage("Unary not possible")
-		return nil
+	exprType := node.Expression.Visit(c)
+
+	switch node.Operator.Id {
+	case scanner.Bang:
+		if exprType != "bool" {
+			c.nodeError(node, "Unary operation possible on type bool")
+		}
+
+		break
+	case scanner.Plus, scanner.Minus:
+		if exprType != "int" && exprType != "float" {
+			c.nodeError(node, "Unary operation possible on types int and float")
+		}
+
+		break
 	}
-	return node.Expression.Visit(c)
+
+	return exprType
 }
 
 func (c *Context) VisitAssignExpr(node *ast.AssignExpr) any {

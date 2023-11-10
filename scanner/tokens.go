@@ -18,6 +18,7 @@ const (
 	Star
 	Slash
 	Equals
+	Bang
 
 	// 2-char operators
 	PlusEquals
@@ -31,6 +32,7 @@ const (
 	LowerEquals
 	GreaterEquals
 	EqualsEquals
+	BangEquals
 
 	// Keywords
 	Debug // prints node value
@@ -43,6 +45,8 @@ const (
 	Integer
 	Float
 	String
+	True
+	False
 
 	// Others
 	OpenParen

@@ -95,18 +95,18 @@ def gen_functions(node):
             str_prefix += "\t" + var_name + " := \"{\""
             str_prefix += """
 \tfor i, n := range node.""" + entry.entry_name() + """ {
-\t\tstrNodes += n.Stringify()
+\t\tstrNodes += fmt.Sprintf("%s", n)
 \t\tif i <= len(node.""" + entry.entry_name() + """)-1 {
 \t\t\tstrNodes += ", "
 \t\t}
 \t}"""
             str_prefix += "\n\t" + var_name + " += \"}\"\n"
 
-    stringify = "func (node *" + node.node_name() + ") Stringify() string {\n" + str_prefix + "\treturn \"(" + node.node_name()
+    stringify = "func (node *" + node.node_name() + ") String() string {\n" + str_prefix + "\treturn \"(" + node.node_name()
     for entry in node.entries:
         stringify += " " + entry.entry_name() + "=\"+"
         if entry.entry_type() == "scanner.Token" or entry.entry_type() == "Node":
-            stringify += "node." + entry.entry_name() + ".Stringify()"
+            stringify += "fmt.Sprintf(\"%s\", node." + entry.entry_name() + ")"
         elif entry.entry_type()[0] == "[":
             stringify += "str" + entry.entry_name()
         else:
@@ -134,7 +134,10 @@ def gen_functions(node):
 def gen_source(ast_nodes):
     source_code = """package ast
 
-import "breeze/scanner"
+import (
+\t"breeze/scanner"
+\t"fmt"
+)
 
 type NodeId uint8
 
@@ -161,7 +164,7 @@ const (
 type Node interface {
 \tGetId() NodeId
 \tGetType() NodeType
-\tStringify() string
+\tString() string
 \tGetToken() scanner.Token
 \tVisit(visitor Visitor) any
 }
@@ -189,6 +192,7 @@ nodes = {
     Err("Err", {Entry("Message", "string"), Entry("Hint", "string")}),
     Stmt("Debug", {Entry("Expression", "Node")}),
     Stmt("Block", {Entry("Nodes", "[]Node")}),
+    Stmt("Conditional", {Entry("Condition", "Node"), Entry("Statement", "Node"), Entry("ElseStatement", "Node")}),
     Stmt("Closure", {Entry("Block", "Node")}),
     Stmt("Expr", {Entry("Expression", "Node")}),
     Decl("Let", {Entry("Identifier", "string"), Entry("Type", "string")}),
@@ -198,6 +202,7 @@ nodes = {
     Expr("IdentifierLit", {Entry("Name", "string")}),
     Expr("IntegerLit", {Entry("Value", "string")}),
     Expr("FloatingLit", {Entry("Value", "string")}),
+    Expr("BooleanLit", {Entry("Value", "string")}),
 }
 
 source = gen_source(nodes)

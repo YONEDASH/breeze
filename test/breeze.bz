@@ -1,6 +1,2 @@
-let x = 1;
-{
-    let x = 2;
-    debug x;
-}
-debug x;
+let condition = !false;
+debug condition;

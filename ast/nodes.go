@@ -1,22 +1,27 @@
 package ast
 
-import "breeze/scanner"
+import (
+	"breeze/scanner"
+	"fmt"
+)
 
 type NodeId uint8
 
 const (
-	BinaryId NodeId = iota
-	ClosureId
-	UnaryId
-	AssignId
+	BlockId NodeId = iota
 	ExprId
+	UnaryId
 	IdentifierLitId
-	ErrId
+	BooleanLitId
 	IntegerLitId
-	FloatingLitId
-	DebugId
-	BlockId
 	LetId
+	BinaryId
+	ConditionalId
+	FloatingLitId
+	ErrId
+	AssignId
+	ClosureId
+	DebugId
 )
 
 type NodeType uint8
@@ -31,287 +36,26 @@ const (
 type Node interface {
 	GetId() NodeId
 	GetType() NodeType
-	Stringify() string
+	String() string
 	GetToken() scanner.Token
 	Visit(visitor Visitor) any
 }
 
 type Visitor interface {
-	VisitBinaryExpr(node *BinaryExpr) any
-	VisitClosureStmt(node *ClosureStmt) any
-	VisitUnaryExpr(node *UnaryExpr) any
-	VisitAssignExpr(node *AssignExpr) any
-	VisitExprStmt(node *ExprStmt) any
-	VisitIdentifierLitExpr(node *IdentifierLitExpr) any
-	VisitErrNode(node *ErrNode) any
-	VisitIntegerLitExpr(node *IntegerLitExpr) any
-	VisitFloatingLitExpr(node *FloatingLitExpr) any
-	VisitDebugStmt(node *DebugStmt) any
 	VisitBlockStmt(node *BlockStmt) any
+	VisitExprStmt(node *ExprStmt) any
+	VisitUnaryExpr(node *UnaryExpr) any
+	VisitIdentifierLitExpr(node *IdentifierLitExpr) any
+	VisitBooleanLitExpr(node *BooleanLitExpr) any
+	VisitIntegerLitExpr(node *IntegerLitExpr) any
 	VisitLetDecl(node *LetDecl) any
-}
-
-type BinaryExpr struct {
-	Node
-	Left     Node
-	Right    Node
-	Operator scanner.Token
-}
-
-func (node *BinaryExpr) GetType() NodeType {
-	return Expr
-}
-
-func (node *BinaryExpr) GetId() NodeId {
-	return BinaryId
-}
-
-func (node *BinaryExpr) Stringify() string {
-	return "(BinaryExpr Left=" + node.Left.Stringify() + " Right=" + node.Right.Stringify() + " Operator=" + node.Operator.Stringify() + ")"
-}
-
-func (node *BinaryExpr) GetToken() scanner.Token {
-	return node.Operator
-}
-
-func (node *BinaryExpr) Visit(visitor Visitor) any {
-	return visitor.VisitBinaryExpr(node)
-}
-
-type ClosureStmt struct {
-	Node
-	Token scanner.Token
-	Block Node
-}
-
-func (node *ClosureStmt) GetType() NodeType {
-	return Stmt
-}
-
-func (node *ClosureStmt) GetId() NodeId {
-	return ClosureId
-}
-
-func (node *ClosureStmt) Stringify() string {
-	return "(ClosureStmt Block=" + node.Block.Stringify() + ")"
-}
-
-func (node *ClosureStmt) GetToken() scanner.Token {
-	return node.Token
-}
-
-func (node *ClosureStmt) Visit(visitor Visitor) any {
-	return visitor.VisitClosureStmt(node)
-}
-
-type UnaryExpr struct {
-	Node
-	Expression Node
-	Operator   scanner.Token
-}
-
-func (node *UnaryExpr) GetType() NodeType {
-	return Expr
-}
-
-func (node *UnaryExpr) GetId() NodeId {
-	return UnaryId
-}
-
-func (node *UnaryExpr) Stringify() string {
-	return "(UnaryExpr Expression=" + node.Expression.Stringify() + " Operator=" + node.Operator.Stringify() + ")"
-}
-
-func (node *UnaryExpr) GetToken() scanner.Token {
-	return node.Operator
-}
-
-func (node *UnaryExpr) Visit(visitor Visitor) any {
-	return visitor.VisitUnaryExpr(node)
-}
-
-type AssignExpr struct {
-	Node
-	Name     scanner.Token
-	Value    Node
-	Operator scanner.Token
-}
-
-func (node *AssignExpr) GetType() NodeType {
-	return Expr
-}
-
-func (node *AssignExpr) GetId() NodeId {
-	return AssignId
-}
-
-func (node *AssignExpr) Stringify() string {
-	return "(AssignExpr Name=" + node.Name.Stringify() + " Value=" + node.Value.Stringify() + " Operator=" + node.Operator.Stringify() + ")"
-}
-
-func (node *AssignExpr) GetToken() scanner.Token {
-	return node.Name
-}
-
-func (node *AssignExpr) Visit(visitor Visitor) any {
-	return visitor.VisitAssignExpr(node)
-}
-
-type ExprStmt struct {
-	Node
-	Token      scanner.Token
-	Expression Node
-}
-
-func (node *ExprStmt) GetType() NodeType {
-	return Stmt
-}
-
-func (node *ExprStmt) GetId() NodeId {
-	return ExprId
-}
-
-func (node *ExprStmt) Stringify() string {
-	return "(ExprStmt Expression=" + node.Expression.Stringify() + ")"
-}
-
-func (node *ExprStmt) GetToken() scanner.Token {
-	return node.Token
-}
-
-func (node *ExprStmt) Visit(visitor Visitor) any {
-	return visitor.VisitExprStmt(node)
-}
-
-type IdentifierLitExpr struct {
-	Node
-	Token scanner.Token
-	Name  string
-}
-
-func (node *IdentifierLitExpr) GetType() NodeType {
-	return Expr
-}
-
-func (node *IdentifierLitExpr) GetId() NodeId {
-	return IdentifierLitId
-}
-
-func (node *IdentifierLitExpr) Stringify() string {
-	return "(IdentifierLitExpr Name=" + string(node.Name) + ")"
-}
-
-func (node *IdentifierLitExpr) GetToken() scanner.Token {
-	return node.Token
-}
-
-func (node *IdentifierLitExpr) Visit(visitor Visitor) any {
-	return visitor.VisitIdentifierLitExpr(node)
-}
-
-type ErrNode struct {
-	Node
-	Token   scanner.Token
-	Message string
-	Hint    string
-}
-
-func (node *ErrNode) GetType() NodeType {
-	return Err
-}
-
-func (node *ErrNode) GetId() NodeId {
-	return ErrId
-}
-
-func (node *ErrNode) Stringify() string {
-	return "(ErrNode Message=" + string(node.Message) + " Hint=" + string(node.Hint) + ")"
-}
-
-func (node *ErrNode) GetToken() scanner.Token {
-	return node.Token
-}
-
-func (node *ErrNode) Visit(visitor Visitor) any {
-	return visitor.VisitErrNode(node)
-}
-
-type IntegerLitExpr struct {
-	Node
-	Token scanner.Token
-	Value string
-}
-
-func (node *IntegerLitExpr) GetType() NodeType {
-	return Expr
-}
-
-func (node *IntegerLitExpr) GetId() NodeId {
-	return IntegerLitId
-}
-
-func (node *IntegerLitExpr) Stringify() string {
-	return "(IntegerLitExpr Value=" + string(node.Value) + ")"
-}
-
-func (node *IntegerLitExpr) GetToken() scanner.Token {
-	return node.Token
-}
-
-func (node *IntegerLitExpr) Visit(visitor Visitor) any {
-	return visitor.VisitIntegerLitExpr(node)
-}
-
-type FloatingLitExpr struct {
-	Node
-	Token scanner.Token
-	Value string
-}
-
-func (node *FloatingLitExpr) GetType() NodeType {
-	return Expr
-}
-
-func (node *FloatingLitExpr) GetId() NodeId {
-	return FloatingLitId
-}
-
-func (node *FloatingLitExpr) Stringify() string {
-	return "(FloatingLitExpr Value=" + string(node.Value) + ")"
-}
-
-func (node *FloatingLitExpr) GetToken() scanner.Token {
-	return node.Token
-}
-
-func (node *FloatingLitExpr) Visit(visitor Visitor) any {
-	return visitor.VisitFloatingLitExpr(node)
-}
-
-type DebugStmt struct {
-	Node
-	Token      scanner.Token
-	Expression Node
-}
-
-func (node *DebugStmt) GetType() NodeType {
-	return Stmt
-}
-
-func (node *DebugStmt) GetId() NodeId {
-	return DebugId
-}
-
-func (node *DebugStmt) Stringify() string {
-	return "(DebugStmt Expression=" + node.Expression.Stringify() + ")"
-}
-
-func (node *DebugStmt) GetToken() scanner.Token {
-	return node.Token
-}
-
-func (node *DebugStmt) Visit(visitor Visitor) any {
-	return visitor.VisitDebugStmt(node)
+	VisitBinaryExpr(node *BinaryExpr) any
+	VisitConditionalStmt(node *ConditionalStmt) any
+	VisitFloatingLitExpr(node *FloatingLitExpr) any
+	VisitErrNode(node *ErrNode) any
+	VisitAssignExpr(node *AssignExpr) any
+	VisitClosureStmt(node *ClosureStmt) any
+	VisitDebugStmt(node *DebugStmt) any
 }
 
 type BlockStmt struct {
@@ -328,10 +72,10 @@ func (node *BlockStmt) GetId() NodeId {
 	return BlockId
 }
 
-func (node *BlockStmt) Stringify() string {
+func (node *BlockStmt) String() string {
 	strNodes := "{"
 	for i, n := range node.Nodes {
-		strNodes += n.Stringify()
+		strNodes += fmt.Sprintf("%s", n)
 		if i <= len(node.Nodes)-1 {
 			strNodes += ", "
 		}
@@ -348,11 +92,141 @@ func (node *BlockStmt) Visit(visitor Visitor) any {
 	return visitor.VisitBlockStmt(node)
 }
 
+type ExprStmt struct {
+	Node
+	Token      scanner.Token
+	Expression Node
+}
+
+func (node *ExprStmt) GetType() NodeType {
+	return Stmt
+}
+
+func (node *ExprStmt) GetId() NodeId {
+	return ExprId
+}
+
+func (node *ExprStmt) String() string {
+	return "(ExprStmt Expression=" + fmt.Sprintf("%s", node.Expression) + ")"
+}
+
+func (node *ExprStmt) GetToken() scanner.Token {
+	return node.Token
+}
+
+func (node *ExprStmt) Visit(visitor Visitor) any {
+	return visitor.VisitExprStmt(node)
+}
+
+type UnaryExpr struct {
+	Node
+	Operator   scanner.Token
+	Expression Node
+}
+
+func (node *UnaryExpr) GetType() NodeType {
+	return Expr
+}
+
+func (node *UnaryExpr) GetId() NodeId {
+	return UnaryId
+}
+
+func (node *UnaryExpr) String() string {
+	return "(UnaryExpr Operator=" + fmt.Sprintf("%s", node.Operator) + " Expression=" + fmt.Sprintf("%s", node.Expression) + ")"
+}
+
+func (node *UnaryExpr) GetToken() scanner.Token {
+	return node.Operator
+}
+
+func (node *UnaryExpr) Visit(visitor Visitor) any {
+	return visitor.VisitUnaryExpr(node)
+}
+
+type IdentifierLitExpr struct {
+	Node
+	Token scanner.Token
+	Name  string
+}
+
+func (node *IdentifierLitExpr) GetType() NodeType {
+	return Expr
+}
+
+func (node *IdentifierLitExpr) GetId() NodeId {
+	return IdentifierLitId
+}
+
+func (node *IdentifierLitExpr) String() string {
+	return "(IdentifierLitExpr Name=" + string(node.Name) + ")"
+}
+
+func (node *IdentifierLitExpr) GetToken() scanner.Token {
+	return node.Token
+}
+
+func (node *IdentifierLitExpr) Visit(visitor Visitor) any {
+	return visitor.VisitIdentifierLitExpr(node)
+}
+
+type BooleanLitExpr struct {
+	Node
+	Token scanner.Token
+	Value string
+}
+
+func (node *BooleanLitExpr) GetType() NodeType {
+	return Expr
+}
+
+func (node *BooleanLitExpr) GetId() NodeId {
+	return BooleanLitId
+}
+
+func (node *BooleanLitExpr) String() string {
+	return "(BooleanLitExpr Value=" + string(node.Value) + ")"
+}
+
+func (node *BooleanLitExpr) GetToken() scanner.Token {
+	return node.Token
+}
+
+func (node *BooleanLitExpr) Visit(visitor Visitor) any {
+	return visitor.VisitBooleanLitExpr(node)
+}
+
+type IntegerLitExpr struct {
+	Node
+	Token scanner.Token
+	Value string
+}
+
+func (node *IntegerLitExpr) GetType() NodeType {
+	return Expr
+}
+
+func (node *IntegerLitExpr) GetId() NodeId {
+	return IntegerLitId
+}
+
+func (node *IntegerLitExpr) String() string {
+	return "(IntegerLitExpr Value=" + string(node.Value) + ")"
+}
+
+func (node *IntegerLitExpr) GetToken() scanner.Token {
+	return node.Token
+}
+
+func (node *IntegerLitExpr) Visit(visitor Visitor) any {
+	return visitor.VisitIntegerLitExpr(node)
+}
+
 type LetDecl struct {
 	Node
 	Token      scanner.Token
-	Identifier string
 	Type       string
+	Identifier string
 }
 
 func (node *LetDecl) GetType() NodeType {
@@ -363,8 +237,8 @@ func (node *LetDecl) GetId() NodeId {
 	return LetId
 }
 
-func (node *LetDecl) Stringify() string {
-	return "(LetDecl Identifier=" + string(node.Identifier) + " Type=" + string(node.Type) + ")"
+func (node *LetDecl) String() string {
+	return "(LetDecl Type=" + string(node.Type) + " Identifier=" + string(node.Identifier) + ")"
 }
 
 func (node *LetDecl) GetToken() scanner.Token {
@@ -373,4 +247,191 @@ func (node *LetDecl) GetToken() scanner.Token {
 
 func (node *LetDecl) Visit(visitor Visitor) any {
 	return visitor.VisitLetDecl(node)
+}
+
+type BinaryExpr struct {
+	Node
+	Operator scanner.Token
+	Right    Node
+	Left     Node
+}
+
+func (node *BinaryExpr) GetType() NodeType {
+	return Expr
+}
+
+func (node *BinaryExpr) GetId() NodeId {
+	return BinaryId
+}
+
+func (node *BinaryExpr) String() string {
+	return "(BinaryExpr Operator=" + fmt.Sprintf("%s", node.Operator) + " Right=" + fmt.Sprintf("%s", node.Right) + " Left=" + fmt.Sprintf("%s", node.Left) + ")"
+}
+
+func (node *BinaryExpr) GetToken() scanner.Token {
+	return node.Operator
+}
+
+func (node *BinaryExpr) Visit(visitor Visitor) any {
+	return visitor.VisitBinaryExpr(node)
+}
+
+type ConditionalStmt struct {
+	Node
+	Token         scanner.Token
+	Statement     Node
+	ElseStatement Node
+	Condition     Node
+}
+
+func (node *ConditionalStmt) GetType() NodeType {
+	return Stmt
+}
+
+func (node *ConditionalStmt) GetId() NodeId {
+	return ConditionalId
+}
+
+func (node *ConditionalStmt) String() string {
+	return "(ConditionalStmt Statement=" + fmt.Sprintf("%s", node.Statement) + " ElseStatement=" + fmt.Sprintf("%s", node.ElseStatement) + " Condition=" + fmt.Sprintf("%s", node.Condition) + ")"
+}
+
+func (node *ConditionalStmt) GetToken() scanner.Token {
+	return node.Token
+}
+
+func (node *ConditionalStmt) Visit(visitor Visitor) any {
+	return visitor.VisitConditionalStmt(node)
+}
+
+type FloatingLitExpr struct {
+	Node
+	Token scanner.Token
+	Value string
+}
+
+func (node *FloatingLitExpr) GetType() NodeType {
+	return Expr
+}
+
+func (node *FloatingLitExpr) GetId() NodeId {
+	return FloatingLitId
+}
+
+func (node *FloatingLitExpr) String() string {
+	return "(FloatingLitExpr Value=" + string(node.Value) + ")"
+}
+
+func (node *FloatingLitExpr) GetToken() scanner.Token {
+	return node.Token
+}
+
+func (node *FloatingLitExpr) Visit(visitor Visitor) any {
+	return visitor.VisitFloatingLitExpr(node)
+}
+
+type ErrNode struct {
+	Node
+	Token   scanner.Token
+	Hint    string
+	Message string
+}
+
+func (node *ErrNode) GetType() NodeType {
+	return Err
+}
+
+func (node *ErrNode) GetId() NodeId {
+	return ErrId
+}
+
+func (node *ErrNode) String() string {
+	return "(ErrNode Hint=" + string(node.Hint) + " Message=" + string(node.Message) + ")"
+}
+
+func (node *ErrNode) GetToken() scanner.Token {
+	return node.Token
+}
+
+func (node *ErrNode) Visit(visitor Visitor) any {
+	return visitor.VisitErrNode(node)
+}
+
+type AssignExpr struct {
+	Node
+	Operator scanner.Token
+	Value    Node
+	Name     scanner.Token
+}
+
+func (node *AssignExpr) GetType() NodeType {
+	return Expr
+}
+
+func (node *AssignExpr) GetId() NodeId {
+	return AssignId
+}
+
+func (node *AssignExpr) String() string {
+	return "(AssignExpr Operator=" + fmt.Sprintf("%s", node.Operator) + " Value=" + fmt.Sprintf("%s", node.Value) + " Name=" + fmt.Sprintf("%s", node.Name) + ")"
+}
+
+func (node *AssignExpr) GetToken() scanner.Token {
+	return node.Operator
+}
+
+func (node *AssignExpr) Visit(visitor Visitor) any {
+	return visitor.VisitAssignExpr(node)
+}
+
+type ClosureStmt struct {
+	Node
+	Token scanner.Token
+	Block Node
+}
+
+func (node *ClosureStmt) GetType() NodeType {
+	return Stmt
+}
+
+func (node *ClosureStmt) GetId() NodeId {
+	return ClosureId
+}
+
+func (node *ClosureStmt) String() string {
+	return "(ClosureStmt Block=" + fmt.Sprintf("%s", node.Block) + ")"
+}
+
+func (node *ClosureStmt) GetToken() scanner.Token {
+	return node.Token
+}
+
+func (node *ClosureStmt) Visit(visitor Visitor) any {
+	return visitor.VisitClosureStmt(node)
+}
+
+type DebugStmt struct {
+	Node
+	Token      scanner.Token
+	Expression Node
+}
+
+func (node *DebugStmt) GetType() NodeType {
+	return Stmt
+}
+
+func (node *DebugStmt) GetId() NodeId {
+	return DebugId
+}
+
+func (node *DebugStmt) String() string {
+	return "(DebugStmt Expression=" + fmt.Sprintf("%s", node.Expression) + ")"
+}
+
+func (node *DebugStmt) GetToken() scanner.Token {
+	return node.Token
+}
+
+func (node *DebugStmt) Visit(visitor Visitor) any {
+	return visitor.VisitDebugStmt(node)
 }

@@ -58,6 +58,18 @@ func (r *Runtime) VisitExprStmt(node *ast.ExprStmt) any {
 	return nil
 }
 
+func (r *Runtime) VisitConditionalStmt(node *ast.ConditionalStmt) any {
+	result := node.Condition.Visit(r)
+
+	if result != 0 {
+		_ = node.Statement.Visit(r)
+	} else if node.ElseStatement != nil {
+		_ = node.ElseStatement.Visit(r)
+	}
+
+	return nil
+}
+
 func (r *Runtime) VisitClosureStmt(node *ast.ClosureStmt) any {
 	block := node.Block
 
@@ -92,19 +104,69 @@ func (r *Runtime) VisitAssignExpr(node *ast.AssignExpr) any {
 	return nil
 }
 
+func getType(v interface{}) string {
+	switch v.(type) {
+	case float32:
+		return "float32"
+	case int:
+		return "int"
+	case bool:
+		return "bool"
+	}
+	return ""
+}
+
 func (r *Runtime) VisitBinaryExpr(node *ast.BinaryExpr) any {
 	left := node.Left.Visit(r)
 	right := node.Right.Visit(r)
 
+	leftType := getType(left)
+
+	if leftType == "int" {
+		switch node.Operator.Id {
+		case scanner.Plus:
+			return left.(int) + right.(int)
+		case scanner.Minus:
+			return left.(int) - right.(int)
+		case scanner.Star:
+			return left.(int) * right.(int)
+		case scanner.Slash:
+			return left.(int) / right.(int)
+		case scanner.Lower:
+			return left.(int) < right.(int)
+		case scanner.Greater:
+			return left.(int) > right.(int)
+		case scanner.LowerEquals:
+			return left.(int) <= right.(int)
+		case scanner.GreaterEquals:
+			return left.(int) >= right.(int)
+		}
+	} else if leftType == "float32" {
+		switch node.Operator.Id {
+		case scanner.Plus:
+			return left.(float32) + right.(float32)
+		case scanner.Minus:
+			return left.(float32) - right.(float32)
+		case scanner.Star:
+			return left.(float32) * right.(float32)
+		case scanner.Slash:
+			return left.(float32) / right.(float32)
+		case scanner.Lower:
+			return left.(float32) < right.(float32)
+		case scanner.Greater:
+			return left.(float32) > right.(float32)
+		case scanner.LowerEquals:
+			return left.(float32) <= right.(float32)
+		case scanner.GreaterEquals:
+			return left.(float32) >= right.(float32)
+		}
+	}
+
 	switch node.Operator.Id {
-	case scanner.Plus:
-		return left.(int) + right.(int)
-	case scanner.Minus:
-		return left.(int) - right.(int)
-	case scanner.Star:
-		return left.(int) * right.(int)
-	case scanner.Slash:
-		return left.(int) / right.(int)
+	case scanner.EqualsEquals:
+		return left == right
+	case scanner.BangEquals:
+		return left != right
 	}
 
 	return nil
@@ -120,6 +182,29 @@ func (r *Runtime) VisitUnaryExpr(node *ast.UnaryExpr) any {
 		return -value.(int)
 	}
 
+	valueType := getType(value)
+
+	if valueType == "int" {
+		switch node.Operator.Id {
+		case scanner.Plus:
+			return +value.(int)
+		case scanner.Minus:
+			return -value.(int)
+		}
+	} else if valueType == "float32" {
+		switch node.Operator.Id {
+		case scanner.Plus:
+			return +value.(float32)
+		case scanner.Minus:
+			return -value.(float32)
+		}
+	} else if valueType == "bool" {
+		switch node.Operator.Id {
+		case scanner.Bang:
+			return !value.(bool)
+		}
+	}
+
 	return nil
 }
 
@@ -132,10 +217,15 @@ func (r *Runtime) VisitIntegerLitExpr(node *ast.IntegerLitExpr) any {
 	return i
 }
 
+func (r *Runtime) VisitBooleanLitExpr(node *ast.BooleanLitExpr) any {
+	return node.Value == "true"
+}
+
 func (r *Runtime) VisitErrNode(node *ast.ErrNode) any {
 	return nil
 }
 
 func (r *Runtime) VisitFloatingLitExpr(node *ast.FloatingLitExpr) any {
-	return nil
+	f, _ := strconv.ParseFloat(node.Value, 32)
+	return f
 }
