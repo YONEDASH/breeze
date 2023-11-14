@@ -39,3 +39,22 @@ func (sf *SourceFile) GetContent() (string, error) {
 func InitSource(path string) SourceFile {
 	return SourceFile{Path: path}
 }
+
+func WriteFile(path string, content string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	_, err = f.WriteString(content)
+	if err != nil {
+		return err
+	}
+
+	err = f.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

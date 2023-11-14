@@ -123,6 +123,8 @@ func declaration(parser *tokenParser) ast.Node {
 	switch current.Id {
 	case scanner.Let:
 		return let(parser)
+	case scanner.Fn:
+		return fn(parser)
 	}
 
 	return statement(parser)
@@ -169,9 +171,70 @@ func let(parser *tokenParser) ast.Node {
 	}
 
 	assignExpr := &ast.AssignExpr{Operator: operator, Name: identifierToken, Value: expr}
+	assignExprStmt := &ast.ExprStmt{Token: identifierToken, Expression: assignExpr}
 
-	blockStmt := &ast.BlockStmt{Token: keyword, Nodes: []ast.Node{letDecl, assignExpr}}
+	blockStmt := &ast.BlockStmt{Token: keyword, Nodes: []ast.Node{letDecl, assignExprStmt}}
 	return expectSemicolon(parser, blockStmt)
+}
+
+func fn(parser *tokenParser) ast.Node {
+	keyword := parser.advance()
+
+	identifierToken := parser.advance()
+	if identifierToken.Id != scanner.Identifier {
+		return err(identifierToken, "Expected identifier in function name declaration", "")
+	}
+	fnName := identifierToken.Lexeme
+
+	if !parser.expect(scanner.OpenParen) {
+		return err(parser.peek(), "Expected open parenthesis in function declaration", "")
+	}
+	_ = parser.advance()
+
+	paramTypes := make([]string, 0)
+	paramNames := make([]string, 0)
+
+	for {
+		if parser.peek().Id == scanner.CloseParen {
+			break
+		}
+
+		if parser.peek().Id != scanner.Identifier {
+			return err(parser.peek(), "Expected identifier as parameter type", "")
+		}
+
+		paramType := parser.advance().Lexeme
+
+		if parser.peek().Id != scanner.Identifier {
+			return err(parser.peek(), "Expected identifier as parameter name", "")
+		}
+
+		paramName := parser.advance().Lexeme
+
+		paramTypes = append(paramTypes, paramType)
+		paramNames = append(paramNames, paramName)
+
+		if parser.peek().Id == scanner.CloseParen {
+			break
+		}
+
+		if parser.advance().Id != scanner.Comma {
+			return err(parser.peek(), "Expected comma as parameter separator", "")
+		}
+	}
+
+	if parser.advance().Id != scanner.CloseParen {
+		return err(parser.peek(), "Expected closing parenthesis", "")
+	}
+
+	returnType := ""
+	if parser.peek().Id == scanner.Identifier {
+		returnType = parser.advance().Lexeme
+	}
+
+	cl := closure(parser)
+
+	return &ast.FunctionDecl{Token: keyword, Closure: cl, Identifier: fnName, ReturnType: returnType, ParamName: paramNames, ParamType: paramTypes}
 }
 
 func statement(parser *tokenParser) ast.Node {
@@ -186,6 +249,12 @@ func statement(parser *tokenParser) ast.Node {
 		return debug(parser)
 	case scanner.While:
 		return whileLoop(parser)
+	case scanner.Return:
+		return returnStmt(parser)
+	case scanner.Continue:
+		return expectSemicolon(parser, &ast.ContinueStmt{Token: parser.advance()})
+	case scanner.Break:
+		return expectSemicolon(parser, &ast.BreakStmt{Token: parser.advance()})
 	}
 
 	// Parse expression statement
@@ -277,6 +346,15 @@ func whileLoop(parser *tokenParser) ast.Node {
 	}
 
 	return &ast.WhileStmt{Token: keyword, Condition: condition, Statement: stmt}
+}
+
+func returnStmt(parser *tokenParser) ast.Node {
+	keyword := parser.advance()
+	expr := expression(parser)
+	if expr.GetId() == ast.ErrId {
+		return expr
+	}
+	return expectSemicolon(parser, &ast.ReturnStmt{Token: keyword, Expression: expr})
 }
 
 func expression(parser *tokenParser) ast.Node {
@@ -429,7 +507,7 @@ func unary(parser *tokenParser) ast.Node {
 		_ = parser.advance()
 
 		// No recursive parsing for unary. We don't want something like +-+--10 or !!!!!boolVal
-		expr := primary(parser)
+		expr := call(parser)
 
 		if expr.GetId() == ast.ErrId {
 			return expr
@@ -438,7 +516,40 @@ func unary(parser *tokenParser) ast.Node {
 		return &ast.UnaryExpr{Operator: current, Expression: expr}
 	}
 
-	return primary(parser)
+	return call(parser)
+}
+
+func call(parser *tokenParser) ast.Node {
+	expr := primary(parser)
+
+	for {
+		if parser.peek().Id != scanner.OpenParen {
+			return expr
+		}
+
+		openParen := parser.advance()
+
+		arguments := make([]ast.Node, 0)
+
+		if parser.peek().Id != scanner.CloseParen {
+			for {
+				arg := expression(parser)
+				arguments = append(arguments, arg)
+
+				if parser.peek().Id == scanner.CloseParen {
+					break
+				}
+
+				if parser.advance().Id != scanner.Comma {
+					return err(parser.peekPrevious(), "Expected comma for argument separation", "")
+				}
+			}
+		}
+		// Consume )
+		_ = parser.advance()
+
+		expr = &ast.CallExpr{Token: openParen, Expression: expr, Arguments: arguments}
+	}
 }
 
 func primary(parser *tokenParser) ast.Node {

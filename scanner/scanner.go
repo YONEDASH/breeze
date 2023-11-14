@@ -151,6 +151,14 @@ func identifier(scanner *sourceScanner) Token {
 		return makeToken(scanner, False)
 	case "while":
 		return makeToken(scanner, While)
+	case "fn":
+		return makeToken(scanner, Fn)
+	case "return":
+		return makeToken(scanner, Return)
+	case "continue":
+		return makeToken(scanner, Continue)
+	case "break":
+		return makeToken(scanner, Break)
 	}
 
 	return makeToken(scanner, Identifier)
@@ -298,6 +306,8 @@ func scanToken(scanner *sourceScanner) Token {
 		return makeToken(scanner, OpenBracket)
 	case ']':
 		return makeToken(scanner, CloseBracket)
+	case ',':
+		return makeToken(scanner, Comma)
 	}
 
 	return errorToken(scanner, "Unexpected token")

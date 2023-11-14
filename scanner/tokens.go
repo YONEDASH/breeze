@@ -40,6 +40,10 @@ const (
 	If
 	Else
 	While
+	Fn
+	Return
+	Continue
+	Break
 
 	// Literals
 	Identifier
@@ -58,6 +62,7 @@ const (
 	CloseBracket
 	Semicolon
 	Colon
+	Comma
 )
 
 type Token struct {

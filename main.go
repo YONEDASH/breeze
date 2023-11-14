@@ -2,11 +2,11 @@ package main
 
 import (
 	"breeze/analyzer"
+	"breeze/clang"
 	"breeze/common"
 	"breeze/out"
 	"breeze/parser"
 	"breeze/scanner"
-	"breeze/slow"
 	"fmt"
 	"os"
 )
@@ -47,6 +47,10 @@ func main() {
 		return
 	}
 
+	for _, n := range nodes {
+		fmt.Println(n.String())
+	}
+
 	hadError = analyzer.Analyze(file, source, nodes)
 
 	if hadError {
@@ -55,12 +59,24 @@ func main() {
 		return
 	}
 
-	runtime := &slow.GlobalRuntime
-	for _, node := range nodes {
-		fmt.Print(out.ColorWhite.S())
-		fmt.Println(node.String())
-		fmt.Print(out.ColorReset.S())
-		node.Visit(runtime)
+	compiled := clang.Compile(nodes)
+	fmt.Println("-- COMPILED CLANG SOURCE --")
+	fmt.Println(compiled)
+
+	err = common.WriteFile("test/breeze.c", compiled)
+
+	if err != nil {
+		fmt.Println(err)
 	}
+
+	/*
+		runtime := &slow.GlobalRuntime
+		for _, node := range nodes {
+			fmt.Print(out.ColorWhite.S())
+			fmt.Println(node.String())
+			fmt.Print(out.ColorReset.S())
+			node.Visit(runtime)
+		}
+	*/
 
 }

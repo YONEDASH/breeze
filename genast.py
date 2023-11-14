@@ -91,13 +91,13 @@ def gen_functions(node):
     str_prefix = ""
     for entry in node.entries:
         if entry.entry_type()[0] == "[":
-            var_name = "str" + entry.entry_name()
+            var_name = "str_" + entry.entry_name()
             str_prefix += "\t" + var_name + " := \"{\""
             str_prefix += """
 \tfor i, n := range node.""" + entry.entry_name() + """ {
-\t\tstrNodes += fmt.Sprintf("%s", n)
+\t\t""" + "str_" + entry.entry_name() + """ += fmt.Sprintf("%s", n)
 \t\tif i <= len(node.""" + entry.entry_name() + """)-1 {
-\t\t\tstrNodes += ", "
+\t\t\t""" + "str_" + entry.entry_name() + """ += ", "
 \t\t}
 \t}"""
             str_prefix += "\n\t" + var_name + " += \"}\"\n"
@@ -108,7 +108,7 @@ def gen_functions(node):
         if entry.entry_type() == "scanner.Token" or entry.entry_type() == "Node":
             stringify += "fmt.Sprintf(\"%s\", node." + entry.entry_name() + ")"
         elif entry.entry_type()[0] == "[":
-            stringify += "str" + entry.entry_name()
+            stringify += "str_" + entry.entry_name()
         else:
             stringify += "string("
             if entry.entry_type()[0] == "*":
@@ -190,16 +190,25 @@ type Node interface {
 # AST Nodes
 nodes = {
     Err("Err", {Entry("Message", "string"), Entry("Hint", "string")}),
+    Decl("Let", {Entry("Identifier", "string"), Entry("Type", "string")}),
+    Decl("Function", {
+        Entry("Identifier", "string"), Entry("Closure", "Node"),
+        Entry("ReturnType", "string"), Entry("ParamType", "[]string"),
+        Entry("ParamName", "[]string")
+    }),
     Stmt("Debug", {Entry("Expression", "Node")}),
+    Stmt("Return", {Entry("Expression", "Node")}),
+    Stmt("Continue", {}),
+    Stmt("Break", {}),
     Stmt("Block", {Entry("Nodes", "[]Node")}),
     Stmt("Conditional", {Entry("Condition", "Node"), Entry("Statement", "Node"), Entry("ElseStatement", "Node")}),
     Stmt("While", {Entry("Condition", "Node"), Entry("Statement", "Node")}),
     Stmt("Closure", {Entry("Block", "Node")}),
     Stmt("Expr", {Entry("Expression", "Node")}),
-    Decl("Let", {Entry("Identifier", "string"), Entry("Type", "string")}),
     Expr("Assign", {Entry("Operator", "scanner.Token"), Entry("Name", "scanner.Token"), Entry("Value", "Node")}),
     Expr("Binary", {Entry("Operator", "scanner.Token"), Entry("Left", "Node"), Entry("Right", "Node")}),
     Expr("Unary", {Entry("Operator", "scanner.Token"), Entry("Expression", "Node")}),
+    Expr("Call", {Entry("Expression", "Node"), Entry("Arguments", "[]Node")}),
     Expr("IdentifierLit", {Entry("Name", "string")}),
     Expr("IntegerLit", {Entry("Value", "string")}),
     Expr("FloatingLit", {Entry("Value", "string")}),
