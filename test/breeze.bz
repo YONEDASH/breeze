@@ -1,2 +1,8 @@
-let condition = !false;
-debug condition;
+let num = 0;
+debug num;
+while num < 10 {
+    let result = num < 200000;
+    debug result;
+    num = num + 1;
+    debug num;
+}

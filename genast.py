@@ -193,6 +193,7 @@ nodes = {
     Stmt("Debug", {Entry("Expression", "Node")}),
     Stmt("Block", {Entry("Nodes", "[]Node")}),
     Stmt("Conditional", {Entry("Condition", "Node"), Entry("Statement", "Node"), Entry("ElseStatement", "Node")}),
+    Stmt("While", {Entry("Condition", "Node"), Entry("Statement", "Node")}),
     Stmt("Closure", {Entry("Block", "Node")}),
     Stmt("Expr", {Entry("Expression", "Node")}),
     Decl("Let", {Entry("Identifier", "string"), Entry("Type", "string")}),

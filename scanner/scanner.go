@@ -149,6 +149,8 @@ func identifier(scanner *sourceScanner) Token {
 		return makeToken(scanner, True)
 	case "false":
 		return makeToken(scanner, False)
+	case "while":
+		return makeToken(scanner, While)
 	}
 
 	return makeToken(scanner, Identifier)

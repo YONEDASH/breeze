@@ -221,7 +221,27 @@ func (c *Context) VisitConditionalStmt(node *ast.ConditionalStmt) any {
 
 	if conditionType != "bool" {
 		c.comparativeError(node.Condition, "Unexpected condition type", node, "Expected bool type")
-		return nil
+	}
+
+	if node.Statement != nil {
+		_ = node.Statement.Visit(c)
+	}
+	if node.ElseStatement != nil {
+		_ = node.ElseStatement.Visit(c)
+	}
+
+	return nil
+}
+
+func (c *Context) VisitWhileStmt(node *ast.WhileStmt) any {
+	conditionType := node.Condition.Visit(c)
+
+	if conditionType != "bool" {
+		c.comparativeError(node.Condition, "Unexpected condition type", node, "Expected bool type")
+	}
+
+	if node.Statement != nil {
+		_ = node.Statement.Visit(c)
 	}
 
 	return nil
@@ -274,5 +294,10 @@ func (c *Context) VisitAssignExpr(node *ast.AssignExpr) any {
 
 func (c *Context) VisitExprStmt(node *ast.ExprStmt) any {
 	node.Expression.Visit(c)
+	return nil
+}
+
+func (c *Context) VisitErrNode(node *ast.ErrNode) any {
+	c.nodeError(node, fmt.Sprintf("Error node detected. %s", node.Message))
 	return nil
 }

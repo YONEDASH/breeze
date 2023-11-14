@@ -184,6 +184,8 @@ func statement(parser *tokenParser) ast.Node {
 		return closure(parser)
 	case scanner.Debug:
 		return debug(parser)
+	case scanner.While:
+		return whileLoop(parser)
 	}
 
 	// Parse expression statement
@@ -205,9 +207,9 @@ func conditional(parser *tokenParser) ast.Node {
 		return condition
 	}
 
-	statement := declaration(parser)
-	if statement.GetId() == ast.ErrId {
-		return statement
+	stmt := declaration(parser)
+	if stmt.GetId() == ast.ErrId {
+		return stmt
 	}
 
 	var elseStatement ast.Node
@@ -219,7 +221,7 @@ func conditional(parser *tokenParser) ast.Node {
 		}
 	}
 
-	return &ast.ConditionalStmt{Token: keyword, Statement: statement, ElseStatement: elseStatement, Condition: condition}
+	return &ast.ConditionalStmt{Token: keyword, Statement: stmt, ElseStatement: elseStatement, Condition: condition}
 }
 
 func closure(parser *tokenParser) ast.Node {
@@ -253,6 +255,28 @@ func debug(parser *tokenParser) ast.Node {
 		return expr
 	}
 	return expectSemicolon(parser, &ast.DebugStmt{Token: keyword, Expression: expr})
+}
+
+func whileLoop(parser *tokenParser) ast.Node {
+	keyword := parser.advance()
+
+	var condition ast.Node
+	if parser.peek().Id == scanner.OpenBrace {
+		// Allow for infinite while loop: while { ... }
+		condition = &ast.BooleanLitExpr{Token: keyword, Value: "true"}
+	} else {
+		condition = expression(parser)
+		if condition.GetId() == ast.ErrId {
+			return condition
+		}
+	}
+
+	stmt := declaration(parser)
+	if stmt.GetId() == ast.ErrId {
+		return stmt
+	}
+
+	return &ast.WhileStmt{Token: keyword, Condition: condition, Statement: stmt}
 }
 
 func expression(parser *tokenParser) ast.Node {

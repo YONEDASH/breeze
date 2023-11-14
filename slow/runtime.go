@@ -26,7 +26,7 @@ func (e *Environment) get(name string) any {
 		if e.Parent != nil {
 			return e.Parent.get(name)
 		} else {
-			fmt.Println("Runtime Error:", name, "not found")
+			_, _ = fmt.Println("Runtime Error:", name, "not found")
 			return nil
 		}
 	}
@@ -34,6 +34,16 @@ func (e *Environment) get(name string) any {
 }
 
 func (e *Environment) set(name string, value any) {
+	_, ok := e.Variables[name]
+	if !ok {
+		if e.Parent != nil {
+			e.Parent.set(name, value)
+		} else {
+			_, _ = fmt.Println("Runtime Error:", name, "not found")
+			panic(name)
+		}
+		return
+	}
 	e.Variables[name] = value
 }
 
@@ -44,6 +54,7 @@ func initEnv(parent *Environment) *Environment {
 var GlobalRuntime = Runtime{Current: initEnv(nil)}
 
 func (r *Runtime) VisitLetDecl(node *ast.LetDecl) any {
+	r.Current.Variables[node.Identifier] = nil
 	return nil
 }
 
@@ -58,16 +69,34 @@ func (r *Runtime) VisitExprStmt(node *ast.ExprStmt) any {
 	return nil
 }
 
+func (r *Runtime) VisitWhileStmt(node *ast.WhileStmt) any {
+	for {
+		result := node.Condition.Visit(r)
+
+		if !isTrue(result) {
+			break
+		}
+
+		_ = node.Statement.Visit(r)
+	}
+
+	return nil
+}
+
 func (r *Runtime) VisitConditionalStmt(node *ast.ConditionalStmt) any {
 	result := node.Condition.Visit(r)
 
-	if result != 0 {
+	if isTrue(result) {
 		_ = node.Statement.Visit(r)
 	} else if node.ElseStatement != nil {
 		_ = node.ElseStatement.Visit(r)
 	}
 
 	return nil
+}
+
+func isTrue(a any) bool {
+	return a != 0 && a != false
 }
 
 func (r *Runtime) VisitClosureStmt(node *ast.ClosureStmt) any {

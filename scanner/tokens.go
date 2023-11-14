@@ -39,6 +39,7 @@ const (
 	Let
 	If
 	Else
+	While
 
 	// Literals
 	Identifier
@@ -71,5 +72,8 @@ func (t *Token) Stringify() string {
 
 func (t *Token) LexemeLength() int {
 	runes := []rune(t.Lexeme)
+	if t.Id == String {
+		return len(runes) + 2
+	}
 	return len(runes)
 }
