@@ -27,6 +27,7 @@ const (
 var initialNode = &ast.ErrNode{Token: scanner.Token{Id: scanner.EOF, Position: common.InitPosition()}, Message: "INITIAL", Hint: ""}
 
 var (
+	TypeNoReference    = &staticType{TypeName: "undef_type", DeclaredAt: initialNode}
 	TypeVoidReference  = &staticType{TypeName: "void", DeclaredAt: initialNode}
 	TypeIntReference   = &staticType{TypeName: "int", DeclaredAt: initialNode}
 	TypeFloatReference = &staticType{TypeName: "float", DeclaredAt: initialNode}
@@ -34,6 +35,7 @@ var (
 )
 
 func declareTypes(context *Context) {
+	context.declare(TypeNoReference, initialNode)
 	context.declare(TypeVoidReference, initialNode)
 	context.declare(TypeIntReference, initialNode)
 	context.declare(TypeFloatReference, initialNode)
@@ -209,7 +211,7 @@ func (c *Context) lookup(declName string) (staticDeclaration, bool) {
 
 func (c *Context) lookupType(node ast.Node, typeName string) (*staticType, bool) {
 	if len(typeName) == 0 {
-		typeName = TypeVoidReference.TypeName
+		return TypeNoReference, true
 	}
 
 	declType, ok := c.lookup(typeName)
@@ -258,7 +260,11 @@ func (c *Context) define(name string, at ast.Node, value ast.Node) {
 			return
 		}
 		inferredType := inferred.(*staticType)
-		if inferredType.TypeName != varDecl.VariableType.TypeName {
+		if compareType(*varDecl.Static(), *TypeNoReference) {
+			varDecl.VariableType = inferredType
+		}
+
+		if !compareType(*varDecl.Static(), *inferredType) {
 			c.nodeError(value, "Unexpected type")
 			out.PrintHintMessage(fmt.Sprintf("Expcted value of type %s", varDecl.VariableType.TypeName), out.ColorRed)
 			return
@@ -266,8 +272,8 @@ func (c *Context) define(name string, at ast.Node, value ast.Node) {
 
 		// CONTEXT: Set type in node
 		if decl.Node().GetId() == ast.LetId {
-			let := decl.Node().(*ast.LetDecl)
-			let.Type = varDecl.VariableType.TypeName
+			letDecl := varDecl.DeclaredAt.(*ast.LetDecl)
+			letDecl.Type = varDecl.VariableType.TypeName
 		}
 
 	}
