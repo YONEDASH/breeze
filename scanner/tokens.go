@@ -19,12 +19,16 @@ const (
 	Slash
 	Equals
 	Bang
+	And
+	Pipe
 
 	// 2-char operators
 	PlusEquals
 	MinusEquals
 	StarEquals
 	SlashEquals
+	AndAnd
+	PipePipe
 
 	// Comparative
 	Lower

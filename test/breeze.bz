@@ -6,5 +6,9 @@ fn fib(int n) int {
 }
 
 fn main() int {
-    fib(40);
+    let result = fib(40);
+
+    if result == 0 || result > 10 {
+
+    }
 }

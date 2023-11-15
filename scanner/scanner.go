@@ -290,6 +290,18 @@ func scanToken(scanner *sourceScanner) Token {
 			return makeToken(scanner, BangEquals)
 		}
 		return makeToken(scanner, Bang)
+	case '|':
+		if scanner.peek() == '|' {
+			scanner.advance()
+			return makeToken(scanner, PipePipe)
+		}
+		return makeToken(scanner, Pipe)
+	case '&':
+		if scanner.peek() == '&' {
+			scanner.advance()
+			return makeToken(scanner, AndAnd)
+		}
+		return makeToken(scanner, And)
 	case ';':
 		return makeToken(scanner, Semicolon)
 	case ':':

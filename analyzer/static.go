@@ -398,7 +398,7 @@ func (c *Context) VisitBinaryExpr(node *ast.BinaryExpr) any {
 	}
 
 	switch node.Operator.Id {
-	case scanner.Lower, scanner.Greater, scanner.LowerEquals, scanner.GreaterEquals, scanner.EqualsEquals, scanner.BangEquals:
+	case scanner.Lower, scanner.Greater, scanner.LowerEquals, scanner.GreaterEquals, scanner.EqualsEquals, scanner.BangEquals, scanner.AndAnd, scanner.PipePipe:
 		return TypeBoolReference
 	}
 

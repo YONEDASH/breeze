@@ -362,7 +362,7 @@ func expression(parser *tokenParser) ast.Node {
 }
 
 func assign(parser *tokenParser) ast.Node {
-	expr := equality(parser)
+	expr := logOr(parser)
 	if expr.GetId() == ast.ErrId {
 		return expr
 	}
@@ -391,6 +391,50 @@ func assign(parser *tokenParser) ast.Node {
 	}
 
 	return err(operator, "Unsupported assign operation on token", "Expected identifier TODO: or call")
+}
+
+func logOr(parser *tokenParser) ast.Node {
+	left := logAnd(parser)
+
+	for {
+		if parser.isDone() {
+			break
+		}
+
+		current := parser.peek()
+		if current.Id != scanner.PipePipe {
+			break
+		}
+
+		operator := parser.advance()
+		right := logAnd(parser)
+
+		left = &ast.BinaryExpr{Operator: operator, Left: left, Right: right}
+	}
+
+	return left
+}
+
+func logAnd(parser *tokenParser) ast.Node {
+	left := equality(parser)
+
+	for {
+		if parser.isDone() {
+			break
+		}
+
+		current := parser.peek()
+		if current.Id != scanner.AndAnd {
+			break
+		}
+
+		operator := parser.advance()
+		right := equality(parser)
+
+		left = &ast.BinaryExpr{Operator: operator, Left: left, Right: right}
+	}
+
+	return left
 }
 
 func equality(parser *tokenParser) ast.Node {

@@ -105,6 +105,10 @@ func (c *compiler) VisitBinaryExpr(node *ast.BinaryExpr) any {
 		c.body += "=="
 	case scanner.BangEquals:
 		c.body += "!="
+	case scanner.AndAnd:
+		c.body += "&&"
+	case scanner.PipePipe:
+		c.body += "||"
 	default:
 		panic(fmt.Sprintf("Missing binary operation translation for Clang: %d ", node.Operator.Id))
 	}
