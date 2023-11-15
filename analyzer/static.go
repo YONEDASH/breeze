@@ -43,7 +43,33 @@ func declareTypes(context *Context) {
 }
 
 func compareType(a staticType, b staticType) bool {
-	return a.TypeName == b.TypeName
+	if a.TypeName == b.TypeName {
+		return true
+	}
+	return false
+}
+
+func commonType(a staticType, b staticType) staticType {
+	if compareType(a, b) {
+		return a
+	}
+	if a.Parent != nil {
+		return commonType(*a.Parent, b)
+	}
+	if b.Parent != nil {
+		return commonType(*b.Parent, a)
+	}
+	return *TypeNoReference
+}
+
+func expectType(expect staticType, input staticType) bool {
+	if compareType(expect, input) {
+		return true
+	}
+	if input.Parent != nil {
+		return expectType(expect, *input.Parent)
+	}
+	return false
 }
 
 type staticDeclaration interface {
@@ -55,6 +81,7 @@ type staticDeclaration interface {
 
 type staticType struct {
 	staticDeclaration
+	Parent     *staticType
 	DeclaredAt ast.Node
 	TypeName   string
 }
@@ -254,17 +281,12 @@ func (c *Context) define(name string, at ast.Node, value ast.Node) {
 		varDecl := decl.(*variable)
 		varDecl.Initialized = true
 
-		inferred := value.Visit(c).(staticDeclaration)
-		if inferred.RefType() != TypeReference {
-			c.nodeError(value, "Expected type reference")
-			return
-		}
-		inferredType := inferred.(*staticType)
+		inferredType := value.Visit(c).(staticDeclaration).Static()
 		if compareType(*varDecl.Static(), *TypeNoReference) {
 			varDecl.VariableType = inferredType
 		}
 
-		if !compareType(*varDecl.Static(), *inferredType) {
+		if !compareType(*inferredType, *varDecl.VariableType) {
 			c.nodeError(value, "Unexpected type")
 			out.PrintHintMessage(fmt.Sprintf("Expcted value of type %s", varDecl.VariableType.TypeName), out.ColorRed)
 			return
