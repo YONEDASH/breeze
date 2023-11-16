@@ -350,6 +350,11 @@ func whileLoop(parser *tokenParser) ast.Node {
 
 func returnStmt(parser *tokenParser) ast.Node {
 	keyword := parser.advance()
+
+	if parser.peek().Id == scanner.Semicolon {
+		return expectSemicolon(parser, &ast.ReturnStmt{Token: keyword, Expression: nil})
+	}
+
 	expr := expression(parser)
 	if expr.GetId() == ast.ErrId {
 		return expr

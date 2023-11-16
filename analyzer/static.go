@@ -429,6 +429,17 @@ func (c *Context) VisitReturnStmt(node *ast.ReturnStmt) any {
 	}
 
 	fn := c.CurrentFunction
+
+	if node.Expression == nil && !compareType(*fn.ReturnType, *TypeNoReference) {
+		c.comparativeError(node, fmt.Sprintf("Missing return value"), fn.Node(), fmt.Sprintf("Function expects return value"))
+		return TypeVoidReference
+	}
+
+	if node.Expression != nil && compareType(*fn.ReturnType, *TypeNoReference) {
+		c.comparativeError(node, fmt.Sprintf("Present return value"), fn.Node(), fmt.Sprintf("Function does not expect return value"))
+		return TypeVoidReference
+	}
+
 	returnType := node.Expression.Visit(c).(staticDeclaration).Static()
 
 	if !compareType(*returnType, *fn.ReturnType) {
