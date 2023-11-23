@@ -2,11 +2,46 @@ package clang
 
 import (
 	"breeze/ast"
+	"breeze/common"
 	"breeze/scanner"
+	"bytes"
 	"fmt"
+	"os/exec"
 )
 
-func Compile(nodes []ast.Node) string {
+func CompileClang(executablePath string, file common.SourceFile, nodes []ast.Node) string {
+	source := CompileToSource(nodes)
+
+	filePath := fmt.Sprintf("%s.c", file.Path[:len(file.Path)-3]) // substring .bz
+
+	err := common.WriteFile(filePath, source)
+	if err != nil {
+		panic(err)
+	}
+
+	cmd := exec.Command("clang", "-o", executablePath, filePath)
+	fmt.Println("%", cmd.String())
+
+	var stdout = bytes.Buffer{}
+	var stderr = bytes.Buffer{}
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err = cmd.Run()
+
+	fmt.Println(stderr.String())
+	fmt.Println(stdout.String())
+
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+		return source
+	}
+
+	return source
+}
+
+func CompileToSource(nodes []ast.Node) string {
 	c := &compiler{
 		header: "",
 		body:   "",
@@ -125,8 +160,11 @@ func (c *compiler) VisitBlockStmt(node *ast.BlockStmt) any {
 	return nil
 }
 func (c *compiler) VisitReturnStmt(node *ast.ReturnStmt) any {
-	c.body += "return "
-	_ = node.Expression.Visit(c)
+	c.body += "return"
+	if node.Expression != nil {
+		c.body += " "
+		_ = node.Expression.Visit(c)
+	}
 	c.body += ";\n"
 	return nil
 }

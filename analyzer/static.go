@@ -440,11 +440,13 @@ func (c *Context) VisitReturnStmt(node *ast.ReturnStmt) any {
 		return TypeVoidReference
 	}
 
-	returnType := node.Expression.Visit(c).(staticDeclaration).Static()
+	if node.Expression != nil {
+		returnType := node.Expression.Visit(c).(staticDeclaration).Static()
 
-	if !compareType(*returnType, *fn.ReturnType) {
-		c.comparativeError(node, fmt.Sprintf("Invalid return type %s", returnType.TypeName), fn.Node(), fmt.Sprintf("Function expects return type of %s", fn.ReturnType.TypeName))
-		return TypeVoidReference
+		if !compareType(*returnType, *fn.ReturnType) {
+			c.comparativeError(node, fmt.Sprintf("Invalid return type %s", returnType.TypeName), fn.Node(), fmt.Sprintf("Function expects return type of %s", fn.ReturnType.TypeName))
+			return TypeVoidReference
+		}
 	}
 
 	// Stmt, return nothing

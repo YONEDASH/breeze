@@ -1,14 +1,11 @@
-fn fib(int n) int {
+fn fib(int n) -> int {
     if n < 2 {
         return 1;
     }
     return fib(n - 2) + fib(n - 1);
 }
 
-fn main() int {
+fn main() -> int {
     let result = fib(40);
-
-    if result == 0 || result > 10 {
-
-    }
+    return result;
 }

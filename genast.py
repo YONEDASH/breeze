@@ -196,6 +196,12 @@ nodes = {
         Entry("ReturnType", "string"), Entry("ParamType", "[]string"),
         Entry("ParamName", "[]string")
     }),
+    Decl("Struct", {
+        Entry("Identifier", "string"),
+        Entry("ParentType", "string"),
+        Entry("ParamType", "[]string"),
+        Entry("ParamName", "[]string")
+    }),
     Stmt("Debug", {Entry("Expression", "Node")}),
     Stmt("Return", {Entry("Expression", "Node")}),
     Stmt("Continue", {}),
@@ -206,9 +212,11 @@ nodes = {
     Stmt("Closure", {Entry("Block", "Node")}),
     Stmt("Expr", {Entry("Expression", "Node")}),
     Expr("Assign", {Entry("Operator", "scanner.Token"), Entry("Name", "scanner.Token"), Entry("Value", "Node")}),
+    Expr("Set", {Entry("Expression", "Node"), Entry("Name", "scanner.Token"), Entry("Value", "Node")}),
     Expr("Binary", {Entry("Operator", "scanner.Token"), Entry("Left", "Node"), Entry("Right", "Node")}),
     Expr("Unary", {Entry("Operator", "scanner.Token"), Entry("Expression", "Node")}),
     Expr("Call", {Entry("Expression", "Node"), Entry("Arguments", "[]Node")}),
+    Expr("Get", {Entry("Expression", "Node"), Entry("Name", "scanner.Token")}),
     Expr("IdentifierLit", {Entry("Name", "string")}),
     Expr("IntegerLit", {Entry("Value", "string")}),
     Expr("FloatingLit", {Entry("Value", "string")}),

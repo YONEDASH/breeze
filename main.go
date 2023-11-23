@@ -7,8 +7,11 @@ import (
 	"breeze/out"
 	"breeze/parser"
 	"breeze/scanner"
+	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
+	"time"
 )
 
 func main() {
@@ -59,7 +62,8 @@ func main() {
 		return
 	}
 
-	compiled := clang.Compile(nodes)
+	executablePath := "test/out"
+	compiled := clang.CompileClang(executablePath, file, nodes)
 	fmt.Println("-- COMPILED CLANG SOURCE --")
 	fmt.Println(compiled)
 
@@ -69,14 +73,30 @@ func main() {
 		fmt.Println(err)
 	}
 
-	/*
-		runtime := &slow.GlobalRuntime
-		for _, node := range nodes {
-			fmt.Print(out.ColorWhite.S())
-			fmt.Println(node.String())
-			fmt.Print(out.ColorReset.S())
-			node.Visit(runtime)
+	fmt.Println("-- RUN EXECUTABLE --")
+
+	cmd := exec.Command(fmt.Sprintf("./%s", executablePath))
+
+	var stdout = bytes.Buffer{}
+	var stderr = bytes.Buffer{}
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	timeStarted := time.Now().UnixMilli()
+
+	exitCode := 0
+	if err = cmd.Run(); err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			exitCode = exitError.ExitCode()
 		}
-	*/
+	}
+
+	_, _ = fmt.Println(stderr.String())
+	_, _ = fmt.Println(stdout.String())
+
+	timeDelta := time.Now().UnixMilli() - timeStarted
+
+	fmt.Println("Exit Code:", exitCode)
+	fmt.Println("Execution took:", timeDelta, "\bms")
 
 }
